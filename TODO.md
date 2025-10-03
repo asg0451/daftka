@@ -5,8 +5,8 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 ## Repo setup
 - [x] Initialize application supervision entrypoint `Daftka.Application` with empty supervisors (no behavior yet)
 - [ ] Add base types module with opaque types for topic, partition, offset; add `@spec` to public APIs
-- [ ] Tooling: add Credo, Dialyxir, ExDoc; set up basic configs and Mix aliases
-- [ ] Set up github actions ci
+- [x] Tooling: add Credo, Dialyxir, ExDoc; set up basic configs and Mix aliases
+- [x] Set up github actions ci
 
 ## MVP - no replication, single node
 *From here on out, we should always strive to have a vertical slice of the app working, and a test suite that tests it adequately.*

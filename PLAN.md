@@ -126,6 +126,7 @@ Build an Elixir-first, Kafka-inspired queue-log system that is multi-tenant (top
 
 TODO. keep in mind it's a multi node system
 
+```
 Daftka.ControlPlane (Supervisor, one_for_one)
   ├─ Daftka.Cluster.Supervisor (Supervisor)
   │   └─ Node membership/cluster strategy (e.g., libcluster or static)
