@@ -96,6 +96,7 @@ Build an Elixir-first, Kafka-inspired queue-log system that is multi-tenant (top
         - desired replication factor
         - what nodes are in the cluster and what their assignments are
         - etc
+- Partition Group (for organization; just a raft group comprised of Partition Replica Servers)
 - Partition Replica Server
     - responsible for a given topic-partition replica
     - may be leader or follower in raft group
@@ -109,22 +110,23 @@ Build an Elixir-first, Kafka-inspired queue-log system that is multi-tenant (top
     - monitors what is where and decides if a reassignment of a partition replica to another erlang node is required
         - wants to distribute replicas for a given raft group across nodes to ensure survival goals
         - takes load into account as well after that
+    - responsible for creating and destroying partition replica server groups
+- Metadata API Server
+    - Create/DeleteTopic: adds entry to Metadata store and triggers rebalancer to create and assign replicas
+    - others?
 - Admin API Server
     - Drain: trigger Rebalencer to "drain" nodes of replicas and reassigns them to other nodes
     - AddNode: add node to Metadata store's cluster info
     - Reassign: trigger Rebalancer to reassign replicas manually
     - drives those reassignments via some mechanism tbd
+- TODO: some mechanism that controls node placement of control plance processes (Metadata store, rebalancer, admin api server)
 
 
 ### Top-level Supervision Tree
 
-High-level (subject to refinement):
+TODO. keep in mind it's a multi node system
 
-```
-Daftka.Application (Supervisor, one_for_one)
-  ├─ Daftka.TelemetrySupervisor (Supervisor, one_for_one)
-  │   ├─ :telemetry_poller
-  │   └─ Metrics exporter (e.g., Prometheus)
+Daftka.ControlPlane (Supervisor, one_for_one)
   ├─ Daftka.Cluster.Supervisor (Supervisor)
   │   └─ Node membership/cluster strategy (e.g., libcluster or static)
   ├─ Daftka.Metadata.Supervisor (Supervisor, rest_for_one)
@@ -147,7 +149,7 @@ Daftka.Application (Supervisor, one_for_one)
 
 ### Process Naming & Discovery
 - Metadata store is the source of truth for what nodes are in the cluster and what replicas they provide.
-- Processes use `:via` tuples: `{:via, Registry, {Registry.Daftka, {topic, partition, :replica}}}`.
+- Use `libcluster` to support seamless multi node processes.
 
 ### Failure Handling & Restart Strategies
 - Crash-Only Processes
