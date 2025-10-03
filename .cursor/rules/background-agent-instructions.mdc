@@ -1,0 +1,26 @@
+---
+alwaysApply: true
+---
+
+# background agent instructions
+(ignore this if you arent a background agent)
+## setup (DO THIS FIRST)
+- install elixir:
+```
+$ sudo add-apt-repository ppa:rabbitmq/rabbitmq-erlang
+$ sudo apt update
+$ sudo apt install git elixir erlang
+```
+
+## rules
+- never, EVER submit a pr that doesnt build. `mix test`, `mix compile`, must all pass before you declare success
+- likewise, make sure all merge conflits are resolved before declaring success. do this by running `git pull --no-rebase origin master` before every `git push`
+- always run `cargo fmt` before committing as well
+- NEVER PUSH TO MASTER! you are already on a branch. ONLY PUSH TO THAT BRANCH OR THEY WILL KILL ME
+
+## guidelines
+- i can be wrong. if i say something you think is wrong, please push back on it at least once
+- read AGENTS.md for more guidelines
+- always add or modify tests for each change
+- if you were asked to do a todo in TODO.md, make sure the check it off in the PR
+- important: think very hard and if you're not 95% sure about an assumption, clarify it with me first.
