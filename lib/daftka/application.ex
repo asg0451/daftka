@@ -10,7 +10,9 @@ defmodule Daftka.Application do
   @impl true
   @spec start(Application.start_type(), term()) :: Supervisor.on_start()
   def start(_type, _args) do
-    children = []
+    children = [
+      Daftka.ControlPlane
+    ]
 
     opts = [strategy: :one_for_one, name: Daftka.Supervisor]
     Supervisor.start_link(children, opts)
