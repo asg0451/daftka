@@ -4,7 +4,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 
 ## Repo setup
 - [x] Initialize application supervision entrypoint `Daftka.Application` with empty supervisors (no behavior yet)
-- [ ] Add base types module with opaque types for topic, partition, offset; add `@spec` to public APIs
+- [x] Add base types module with opaque types for topic, partition, offset; add `@spec` to public APIs
 - [x] Tooling: add Credo, Dialyxir, ExDoc; set up basic configs and Mix aliases
 - [x] Set up github actions ci
 
