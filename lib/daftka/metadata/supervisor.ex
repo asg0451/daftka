@@ -15,8 +15,8 @@ defmodule Daftka.Metadata.Supervisor do
   @impl true
   def init(_opts) do
     children = [
-      # Daftka.Metadata.Raft,
-      # Daftka.Metadata.KV
+      # In-memory metadata store (MVP)
+      Daftka.Metadata.Store
     ]
 
     Supervisor.init(children, strategy: :rest_for_one)
