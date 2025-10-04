@@ -7,6 +7,7 @@ defmodule Daftka.ApplicationTest do
     assert Process.alive?(pid)
 
     children = Supervisor.which_children(Daftka.Supervisor)
+
     assert Enum.any?(children, fn
              {_, child_pid, :supervisor, [Daftka.ControlPlane]} when is_pid(child_pid) -> true
              _ -> false

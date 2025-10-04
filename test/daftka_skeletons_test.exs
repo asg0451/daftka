@@ -1,17 +1,21 @@
 defmodule DaftkaSkeletonsTest do
   use ExUnit.Case, async: false
 
-  test "control plane supervisor starts and children are present" do
+  test "control plane supervisor starts and control-plane processes are present" do
     assert Process.whereis(Daftka.ControlPlane)
 
-    # Ensure key supervisors/servers are alive
+    # Ensure control plane supervisors/servers are alive
     assert Process.whereis(Daftka.Cluster.Supervisor)
     assert Process.whereis(Daftka.Metadata.Supervisor)
-    assert Process.whereis(Daftka.Router.Supervisor)
-    assert Process.whereis(Daftka.Gateway.Supervisor)
     assert Process.whereis(Daftka.MetadataAPI.Supervisor)
     assert Process.whereis(Daftka.AdminAPI.Supervisor)
     assert Process.whereis(Daftka.Rebalancer)
+  end
+
+  test "data plane supervisor starts and data-plane processes are present" do
+    assert Process.whereis(Daftka.DataPlane)
+    assert Process.whereis(Daftka.Router.Supervisor)
+    assert Process.whereis(Daftka.Gateway.Supervisor)
     assert Process.whereis(Daftka.Partitions.Supervisor)
   end
 
