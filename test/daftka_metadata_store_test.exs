@@ -13,7 +13,7 @@ defmodule DaftkaMetadataStoreTest do
   test "create_topic succeeds and duplicate is rejected" do
     {:ok, topic} = Types.new_topic("orders")
     assert :ok == Store.create_topic(topic, 3)
-    assert {:ok, %{partition_count: 3}} == Store.get_topic(topic)
+    assert {:ok, %{partition_count: 3, owners: %{}}} == Store.get_topic(topic)
     assert {:error, :topic_exists} == Store.create_topic(topic, 3)
   end
 
@@ -47,6 +47,44 @@ defmodule DaftkaMetadataStoreTest do
     names = list |> Enum.map(fn {topic, _} -> Types.topic_value(topic) end) |> MapSet.new()
     assert names == MapSet.new(["a", "b"])
 
-    assert Enum.all?(list, fn {topic, meta} -> Types.topic?(topic) and is_map(meta) end)
+    assert Enum.all?(list, fn {topic, meta} ->
+             Types.topic?(topic) and match?(%{partition_count: _, owners: _}, meta)
+           end)
+  end
+
+  test "set and get partition owners" do
+    {:ok, topic} = Types.new_topic("with_owners")
+    {:ok, p0} = Types.new_partition(0)
+    {:ok, p1} = Types.new_partition(1)
+    :ok = Store.create_topic(topic, 2)
+
+    owner0 = self()
+    assert :ok == Store.set_partition_owner(topic, p0, owner0)
+    assert {:ok, ^owner0} = Store.get_partition_owner(topic, p0)
+
+    # Another pid for p1
+    owner1 =
+      spawn(fn ->
+        receive do
+          _ -> :ok
+        end
+      end)
+
+    try do
+      assert :ok == Store.set_partition_owner(topic, p1, owner1)
+      assert {:ok, ^owner1} = Store.get_partition_owner(topic, p1)
+    after
+      Process.exit(owner1, :kill)
+    end
+
+    # Invalids
+    assert {:error, :invalid_topic} = Store.set_partition_owner("bad", p0, owner0)
+    assert {:error, :invalid_partition} = Store.set_partition_owner(topic, 0, owner0)
+    assert {:error, :invalid_pid} = Store.set_partition_owner(topic, p0, :not_a_pid)
+    {:ok, topic2} = Types.new_topic("nope")
+    {:ok, p2} = Types.new_partition(2)
+    assert {:error, :not_found} = Store.get_partition_owner(topic2, p0)
+    :ok = Store.create_topic(topic2, 2)
+    assert {:error, :partition_out_of_range} = Store.get_partition_owner(topic2, p2)
   end
 end
