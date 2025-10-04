@@ -13,7 +13,7 @@ defmodule Daftka.ControlPlane do
   end
 
   @impl true
-  @spec init(keyword()) :: {:ok, Supervisor.sup_flags(), [Supervisor.child_spec()]}
+  @spec init(keyword()) :: {:ok, {Supervisor.sup_flags(), [Supervisor.child_spec()]}} | :ignore
   def init(_opts) do
     children = [
       # Cluster membership and node strategy
