@@ -31,7 +31,7 @@ export PATH=$installs_dir/elixir/1.18.4-otp-27/bin:$PATH
 ## rules
 - never, EVER submit a pr that doesnt build. `mix test`, `mix compile`, must all pass before you declare success
 - likewise, make sure all merge conflits are resolved before declaring success. do this by running `git pull --no-rebase origin master` before every `git push`
-- always run `cargo fmt` before committing as well
+- always run `mix format` before committing as well
 - NEVER PUSH TO MASTER! you are already on a branch. ONLY PUSH TO THAT BRANCH OR THEY WILL KILL ME
 
 ## guidelines

@@ -2,18 +2,6 @@
 
 Define how people and automation collaborate on the daftka project. This document clarifies roles, responsibilities, review expectations, and quality gates so contributions are fast, safe, and consistent with Elixir and OTP best practices.
 
-## Roles
-
-- **Maintainers**: Own technical direction, review and merge PRs, keep quality bars high.
-- **Contributors**: Implement changes, write tests/docs, follow quality gates and style.
-- **Release Manager (rotating)**: Cuts releases, updates CHANGELOG, tags versions, verifies docs build.
-- **Quality Verifier (rotating)**: Enforces CI gates locally as needed, validates tests and property suites.
-- **Security Reviewer (as-needed)**: Reviews changes that affect API, persistence, authn/z, or multi-tenant isolation.
-- **Docs Owner (rotating)**: Ensures new behaviors are discoverable in docs and examples.
-
-## Decision Records and Traceability
-
-- **Conventional Commits**: Use prefixes like `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:` for consistent history.
 
 ## Contribution Workflow
 
@@ -63,6 +51,7 @@ All items must be satisfied before merge unless explicitly waived by a maintaine
 - **Static Analysis**: Dialyzer required. If introducing new types, prefer type-safe constructors.
 - **Testing**: `mix test` green; property tests seeded and deterministic where possible.
 - **Docs**: `mix docs` builds without warnings.
+- don't add needless accessors; be straightforward and simple, while remaining safe and correct
 
 ## Security and Privacy Expectations
 
