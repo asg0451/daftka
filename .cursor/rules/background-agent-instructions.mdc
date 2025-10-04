@@ -9,7 +9,8 @@ alwaysApply: true
 ```
 # from https://elixir-lang.org/install.html#install-scripts
 curl -fsSO https://elixir-lang.org/install.sh
-sh install.sh elixir@1.18.4 otp@27.3.4
+mv install.sh /tmp/install.sh
+sh /tmp/install.sh elixir@1.18.4 otp@27.3.4
 installs_dir=$HOME/.elixir-install/installs
 export PATH=$installs_dir/otp/27.3.4/bin:$PATH
 export PATH=$installs_dir/elixir/1.18.4-otp-27/bin:$PATH
