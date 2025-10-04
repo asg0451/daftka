@@ -13,7 +13,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 
 - [x] add skeletons for everything listed in the Component Overview in PLAN.md. they should all be registered normally and be genservers or actors as appropriate, but with no functionality.
 - [x] implement the Metadata Store as a simple in memory kv agent
-- [ ] implement the Storage module as a simple in memory log-storage agent (list of Messages (offset, key, value, headers; make a struct for this in Types))
+- [X] implement the Storage module as a simple in memory log-storage agent (list of Messages (offset, key, value, headers; make a struct for this in Types))
 - [ ] implement the Partition Group as a genserver wrapper around its storage actor. it wont actually be a group, but will really be more similar to a Partition Replica Server.
 - [ ] implement the Rebalancer as a simple metadata store poller that spawns partition groups
 - [ ] implement the Metadata api server
