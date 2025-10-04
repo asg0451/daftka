@@ -115,4 +115,70 @@ defmodule Daftka.Types do
   @spec offset?(term()) :: boolean()
   def offset?(%Offset{}), do: true
   def offset?(_), do: false
+
+  # Message
+  defmodule Message do
+    @moduledoc false
+    @enforce_keys [:offset, :key, :value, :headers]
+    defstruct [:offset, :key, :value, :headers]
+  end
+
+  @type header_value :: binary()
+  @type headers :: %{optional(String.t()) => header_value}
+
+  @opaque message :: %Message{
+            offset: offset,
+            key: binary(),
+            value: binary(),
+            headers: headers
+          }
+
+  @type message_error ::
+          {:error, :invalid_message_offset}
+          | {:error, :invalid_message_key}
+          | {:error, :invalid_message_value}
+          | {:error, :invalid_message_headers}
+
+  @doc """
+  Construct a message value with validated fields.
+
+  - `offset` must be a valid `t:offset/0`
+  - `key` and `value` must be binaries
+  - `headers` is a map of binary keys to binary values
+  """
+  @spec new_message(offset, term(), term(), term()) :: {:ok, message} | message_error
+  def new_message(%Offset{} = offset, key, value, headers) do
+    cond do
+      not is_binary(key) -> {:error, :invalid_message_key}
+      not is_binary(value) -> {:error, :invalid_message_value}
+      not valid_headers?(headers) -> {:error, :invalid_message_headers}
+      true -> {:ok, %Message{offset: offset, key: key, value: value, headers: headers}}
+    end
+  end
+
+  def new_message(_, _, _, _), do: {:error, :invalid_message_offset}
+
+  @doc """
+  Accessors for message fields.
+  """
+  @spec message_offset(message) :: offset
+  def message_offset(%Message{offset: offset}), do: offset
+
+  @spec message_key(message) :: binary()
+  def message_key(%Message{key: key}), do: key
+
+  @spec message_value(message) :: binary()
+  def message_value(%Message{value: value}), do: value
+
+  @spec message_headers(message) :: headers
+  def message_headers(%Message{headers: headers}), do: headers
+
+  defp valid_headers?(headers) when is_map(headers) do
+    Enum.all?(headers, fn
+      {k, v} when is_binary(k) and is_binary(v) -> true
+      _ -> false
+    end)
+  end
+
+  defp valid_headers?(_), do: false
 end
