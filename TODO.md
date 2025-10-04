@@ -11,7 +11,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 ## MVP - no replication, single node
 *From here on out, we should always strive to have a vertical slice of the app working, and a test suite that tests it adequately.*
 
-- [ ] add skeletons for everything listed in the Component Overview in PLAN.md. they should all be registered normally and be genservers or actors as appropriate, but with no functionality.
+- [x] add skeletons for everything listed in the Component Overview in PLAN.md. they should all be registered normally and be genservers or actors as appropriate, but with no functionality.
 - [ ] implement the Metadata Store as a simple in memory kv agent
 - [ ] implement the Storage module as a simple in memory kv agent
 - [ ] implement the Partition Group as a genserver wrapper around its storage actor. it wont actually be a group, but will really be more similar to a Partition Replica Server.
