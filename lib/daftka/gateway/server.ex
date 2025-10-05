@@ -10,6 +10,7 @@ defmodule Daftka.Gateway.Server do
 
   alias Daftka.Router
   alias Daftka.Types
+  alias Daftka.Metadata.Store
 
   plug(Plug.Logger)
   plug(:match)
@@ -24,6 +25,44 @@ defmodule Daftka.Gateway.Server do
 
   get "/healthz" do
     send_resp(conn, 200, "ok")
+  end
+
+  # --- Metadata API ---
+  # POST /topics {name, partitions?}
+  post "/topics" do
+    name = Map.get(conn.body_params, "name") || Map.get(conn.body_params, "topic")
+    partitions = Map.get(conn.body_params, "partitions")
+
+    with true <- is_binary(name) or {:error, :invalid_topic},
+         {:ok, topic} <- Types.new_topic(name) do
+      result =
+        case partitions do
+          int when is_integer(int) and int > 0 -> Store.create_topic(topic, int)
+          nil -> Store.create_topic(topic)
+          _ -> {:error, :invalid_partitions}
+        end
+
+      case result do
+        :ok -> json(conn, 201, %{ok: true})
+        {:error, :topic_exists} -> json(conn, 409, %{error: "topic_exists"})
+        {:error, :invalid_partitions} -> json(conn, 400, %{error: "invalid_partitions"})
+        {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
+      end
+    else
+      {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
+      _ -> json(conn, 400, %{error: "invalid_body"})
+    end
+  end
+
+  # GET /topics -> [{name, partitions}]
+  get "/topics" do
+    topics =
+      Store.list_topics()
+      |> Enum.map(fn {t, meta} ->
+        %{name: Types.topic_value(t), partitions: map_size(meta.partitions)}
+      end)
+
+    json(conn, 200, %{topics: topics})
   end
 
   # POST /topics/:topic/partitions/:partition/produce

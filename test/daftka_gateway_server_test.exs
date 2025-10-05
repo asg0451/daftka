@@ -71,4 +71,22 @@ defmodule DaftkaGatewayServerTest do
     assert m["headers"] == %{"a" => "1"}
     assert m["offset"] == 0
   end
+
+  test "create topic and list topics" do
+    # create topic
+    body = %{name: "t1", partitions: 2} |> Jason.encode!()
+
+    conn =
+      conn(:post, "/topics", body)
+      |> put_req_header("content-type", "application/json")
+      |> Server.call(@opts)
+
+    assert conn.status == 201
+
+    # list topics
+    conn = conn(:get, "/topics") |> Server.call(@opts)
+    assert conn.status == 200
+    %{"topics" => topics} = Jason.decode!(conn.resp_body)
+    assert Enum.any?(topics, &(&1["name"] == "t1" and &1["partitions"] == 2))
+  end
 end
