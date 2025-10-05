@@ -132,6 +132,19 @@ defmodule Daftka.Metadata.Store do
     end)
   end
 
+  ## Debug & Inspection
+
+  @doc """
+  Return the entire metadata state for debugging and introspection.
+
+  This is not a stable API and may change shape. Intended for internal tooling,
+  diagnostics, and tests.
+  """
+  @spec dump() :: state()
+  def dump do
+    Agent.get(__MODULE__, fn %State{} = state -> state end)
+  end
+
   @doc """
   Delete a topic.
 

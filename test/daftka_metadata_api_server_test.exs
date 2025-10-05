@@ -46,4 +46,18 @@ defmodule DaftkaMetadataAPIServerTest do
     names = list |> Enum.map(fn {topic, _} -> Daftka.Types.topic_value(topic) end) |> MapSet.new()
     assert names == MapSet.new(["a", "b"])
   end
+
+  test "debug_dump returns full state with topics" do
+    :ok = MetadataAPI.create_topic("orders", 2)
+    :ok = MetadataAPI.create_topic("payments", 1)
+
+    state = MetadataAPI.debug_dump()
+    assert %{topics: topics} = state
+    assert is_map(topics)
+    assert Map.has_key?(topics, "orders")
+    assert Map.has_key?(topics, "payments")
+
+    assert %{partitions: parts_orders} = Map.fetch!(topics, "orders")
+    assert parts_orders |> Map.keys() |> Enum.sort() == [0, 1]
+  end
 end

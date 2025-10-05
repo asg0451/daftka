@@ -96,4 +96,14 @@ defmodule Daftka.MetadataAPI.Server do
   def list_topics do
     Store.list_topics()
   end
+
+  @doc """
+  DEBUG: Return the entire cluster metadata state from the store.
+
+  Intended for diagnostics and tests only; API is not stable.
+  """
+  @spec debug_dump() :: Store.state()
+  def debug_dump do
+    Store.dump()
+  end
 end
