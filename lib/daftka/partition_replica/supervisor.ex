@@ -16,14 +16,26 @@ defmodule Daftka.PartitionReplica.Supervisor do
     Supervisor.start_link(__MODULE__, opts, name: name)
   end
 
-  defp via_name(opts) do
+  @spec child_spec(keyword()) :: Supervisor.child_spec()
+  def child_spec(opts) do
     topic = Keyword.fetch!(opts, :topic)
     partition = Keyword.fetch!(opts, :partition)
 
+    %{
+      id: "partition_supervisor:" <> topic <> ":" <> Integer.to_string(partition),
+      start: {__MODULE__, :start_link, [opts]},
+      type: :supervisor,
+      restart: :permanent
+    }
+  end
+
+  # kept for external lookups if needed
+  defp via_name(opts) do
+    topic = Keyword.fetch!(opts, :topic)
+    partition = Keyword.fetch!(opts, :partition)
     {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
   end
 
-  @impl true
   def init(opts) do
     topic = Keyword.fetch!(opts, :topic)
     partition = Keyword.fetch!(opts, :partition)
@@ -36,10 +48,24 @@ defmodule Daftka.PartitionReplica.Supervisor do
       # Daftka.PartitionReplica.Raft,
 
       # Storage process (placeholder)
-      {Daftka.PartitionReplica.Storage, [name: storage_via]},
+      %{
+        id: "partition_storage:" <> topic <> ":" <> Integer.to_string(partition),
+        start:
+          {Daftka.PartitionReplica.Storage, :start_link,
+           [[topic: topic, partition: partition, name: storage_via]]},
+        type: :worker,
+        restart: :permanent
+      },
 
       # Server (placeholder)
-      {Daftka.PartitionReplica.Server, [name: server_via, storage: storage_via]}
+      %{
+        id: "partition_server:" <> topic <> ":" <> Integer.to_string(partition),
+        start:
+          {Daftka.PartitionReplica.Server, :start_link,
+           [[topic: topic, partition: partition, name: server_via, storage: storage_via]]},
+        type: :worker,
+        restart: :permanent
+      }
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
@@ -68,4 +94,6 @@ defmodule Daftka.PartitionReplica.Supervisor do
   def supervisor_name(topic, partition) do
     {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
   end
+
+  # No local atom names to avoid unbounded atom creation
 end

@@ -19,6 +19,7 @@ defmodule Daftka.PartitionReplica.Server do
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
     storage = Keyword.get(opts, :storage, Storage)
+
     GenServer.start_link(__MODULE__, %{storage: storage}, name: name)
   end
 
@@ -69,4 +70,6 @@ defmodule Daftka.PartitionReplica.Server do
   def handle_call({:fetch_from, from_offset, max_count}, _from, %{storage: storage} = state) do
     {:reply, Storage.fetch_from(storage, from_offset, max_count), state}
   end
+
+  # no custom format_status
 end

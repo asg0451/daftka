@@ -20,10 +20,10 @@ defmodule Daftka.Partitions.Supervisor do
   """
   @spec start_partition_supervisor({String.t(), non_neg_integer()}) ::
           DynamicSupervisor.on_start_child()
-  def start_partition_supervisor({topic, partition} = id)
+  def start_partition_supervisor({topic, partition})
       when is_binary(topic) and is_integer(partition) do
     child_spec = %{
-      id: {:partition, id},
+      id: {:partition_supervisor, topic, partition},
       start:
         {Daftka.PartitionReplica.Supervisor, :start_link, [[topic: topic, partition: partition]]},
       type: :supervisor,
