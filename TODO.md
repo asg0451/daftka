@@ -17,7 +17,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [x] implement the Partition Group as a genserver wrapper around its storage actor. it wont actually be a group, but will really be more similar to a Partition Replica Server.
 - [x] implement the Rebalancer as a simple metadata store poller that spawns partition groups
 - [x] implement the Metadata api server
-- [ ] implement the request router
+- [x] implement the request router
 - [ ] implement the http api gateway
 - [ ] add integration tests to test the whole thing end to end
 
