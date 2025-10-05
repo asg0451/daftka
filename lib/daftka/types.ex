@@ -158,21 +158,6 @@ defmodule Daftka.Types do
 
   def new_message(_, _, _, _), do: {:error, :invalid_message_offset}
 
-  @doc """
-  Accessors for message fields.
-  """
-  @spec message_offset(message) :: offset
-  def message_offset(%Message{offset: offset}), do: offset
-
-  @spec message_key(message) :: binary()
-  def message_key(%Message{key: key}), do: key
-
-  @spec message_value(message) :: binary()
-  def message_value(%Message{value: value}), do: value
-
-  @spec message_headers(message) :: headers
-  def message_headers(%Message{headers: headers}), do: headers
-
   defp valid_headers?(headers) when is_map(headers) do
     Enum.all?(headers, fn
       {k, v} when is_binary(k) and is_binary(v) -> true
