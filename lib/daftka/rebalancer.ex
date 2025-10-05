@@ -11,6 +11,7 @@ defmodule Daftka.Rebalancer do
   alias Daftka.PartitionReplica.Supervisor, as: PartitionReplicaSup
   alias Daftka.Partitions.Supervisor, as: PartitionsSup
   alias Daftka.Types
+  require Logger
 
   @default_poll_ms 100
 
@@ -36,7 +37,6 @@ defmodule Daftka.Rebalancer do
   # Reconcile desired vs actual across all partitions for each topic
   defp reconcile do
     topics = Store.list_topics()
-
     Enum.each(topics, &reconcile_topic/1)
   end
 
@@ -55,9 +55,25 @@ defmodule Daftka.Rebalancer do
 
     case Store.get_partition_owner(topic, p) do
       {:ok, pid} when is_pid(pid) ->
-        if Process.alive?(pid), do: :ok, else: start_partition_and_record_owner(topic, idx)
+        if Process.alive?(pid) do
+          :ok
+        else
+          Logger.info(%{
+            event: "rebalancer.partition.owner_dead",
+            topic: Types.topic_value(topic),
+            partition: idx
+          })
+
+          start_partition_and_record_owner(topic, idx)
+        end
 
       _ ->
+        Logger.info(%{
+          event: "rebalancer.partition.no_owner",
+          topic: Types.topic_value(topic),
+          partition: idx
+        })
+
         start_partition_and_record_owner(topic, idx)
     end
   end
@@ -65,6 +81,12 @@ defmodule Daftka.Rebalancer do
   defp start_partition_and_record_owner(topic, part_index) do
     topic_name = Types.topic_value(topic)
     id = {topic_name, part_index}
+
+    Logger.debug(%{
+      event: "rebalancer.ensure_partition_supervisor",
+      topic: topic_name,
+      partition: part_index
+    })
 
     _ = ensure_partition_supervisor(id)
 
@@ -75,6 +97,14 @@ defmodule Daftka.Rebalancer do
       pid when is_pid(pid) ->
         {:ok, p} = Types.new_partition(part_index)
         :ok = Store.set_partition_owner(topic, p, pid)
+
+        Logger.info(%{
+          event: "rebalancer.partition.owner_set",
+          topic: topic_name,
+          partition: part_index,
+          owner: inspect(pid)
+        })
+
         :ok
 
       _ ->

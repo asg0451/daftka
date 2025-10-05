@@ -1,6 +1,8 @@
 defmodule DaftkaRebalancerTest do
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureLog
+
   alias Daftka.Metadata.Store
   alias Daftka.MetadataAPI.Server, as: MetadataAPI
   alias Daftka.PartitionReplica.Supervisor, as: PartSup
@@ -45,8 +47,11 @@ defmodule DaftkaRebalancerTest do
     Process.sleep(150)
 
     # Trigger manual reconcile by sending poll
-    send(Rebalancer, :poll)
-    Process.sleep(50)
+    _log =
+      capture_log(fn ->
+        send(Rebalancer, :poll)
+        Process.sleep(50)
+      end)
 
     for idx <- 0..1 do
       via = PartSup.supervisor_name("reb-b", idx)
