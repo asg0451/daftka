@@ -37,26 +37,29 @@ defmodule Daftka.Rebalancer do
   defp reconcile do
     topics = Store.list_topics()
 
-    Enum.each(topics, fn {topic, meta} ->
-      partition_indexes =
-        case meta do
-          %{partitions: parts} when is_map(parts) -> Map.keys(parts)
-          _ -> [0]
-        end
+    Enum.each(topics, &reconcile_topic/1)
+  end
 
-      partition_indexes
-      |> Enum.each(fn idx ->
-        {:ok, p} = Types.new_partition(idx)
+  defp reconcile_topic({topic, %{partitions: partitions}}) when is_map(partitions) do
+    partitions
+    |> Map.keys()
+    |> Enum.each(&reconcile_partition(topic, &1))
+  end
 
-        case Store.get_partition_owner(topic, p) do
-          {:ok, pid} when is_pid(pid) ->
-            if Process.alive?(pid), do: :ok, else: start_partition_and_record_owner(topic, idx)
+  defp reconcile_topic({topic, _meta}) do
+    reconcile_partition(topic, 0)
+  end
 
-          _ ->
-            start_partition_and_record_owner(topic, idx)
-        end
-      end)
-    end)
+  defp reconcile_partition(topic, idx) do
+    {:ok, p} = Types.new_partition(idx)
+
+    case Store.get_partition_owner(topic, p) do
+      {:ok, pid} when is_pid(pid) ->
+        if Process.alive?(pid), do: :ok, else: start_partition_and_record_owner(topic, idx)
+
+      _ ->
+        start_partition_and_record_owner(topic, idx)
+    end
   end
 
   defp start_partition_and_record_owner(topic, part_index) do
