@@ -1,9 +1,9 @@
 defmodule Daftka.Types do
   @moduledoc """
-  Base opaque types and constructors for Daftka domain primitives.
+  Base types and constructors for Daftka domain primitives.
 
-  Exposes strongly-typed wrappers for topics, partitions, and offsets.
-  The underlying representation is intentionally opaque to callers.
+  Exposes strongly-typed wrappers for topics, partitions, offsets, and messages.
+  Topic/partition/offset remain opaque; message is a public struct for ergonomic access.
   """
 
   # Topic
