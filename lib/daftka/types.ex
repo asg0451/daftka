@@ -126,12 +126,12 @@ defmodule Daftka.Types do
   @type header_value :: binary()
   @type headers :: %{optional(String.t()) => header_value}
 
-  @opaque message :: %Message{
-            offset: offset,
-            key: binary(),
-            value: binary(),
-            headers: headers
-          }
+  @type message :: %Message{
+          offset: offset,
+          key: binary(),
+          value: binary(),
+          headers: headers
+        }
 
   @type message_error ::
           {:error, :invalid_message_offset}

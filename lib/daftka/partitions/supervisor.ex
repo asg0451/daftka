@@ -1,6 +1,6 @@
 defmodule Daftka.Partitions.Supervisor do
   @moduledoc """
-  Dynamic supervisor managing PartitionReplica supervisors for this node (skeleton).
+  Dynamic supervisor managing per-partition supervisors for this node (MVP).
   """
 
   use DynamicSupervisor
@@ -16,17 +16,16 @@ defmodule Daftka.Partitions.Supervisor do
   end
 
   @doc """
-  Start a partition replica supervisor for a given identifier tuple.
+  Start a partition supervisor for a given `{topic, partition}` tuple.
   """
-  @spec start_partition_replica_supervisor({String.t(), non_neg_integer(), non_neg_integer()}) ::
+  @spec start_partition_supervisor({String.t(), non_neg_integer()}) ::
           DynamicSupervisor.on_start_child()
-  def start_partition_replica_supervisor({topic, partition, replica} = id)
-      when is_binary(topic) and is_integer(partition) and is_integer(replica) do
+  def start_partition_supervisor({topic, partition} = id)
+      when is_binary(topic) and is_integer(partition) do
     child_spec = %{
-      id: {:partition_replica, id},
+      id: {:partition, id},
       start:
-        {Daftka.PartitionReplica.Supervisor, :start_link,
-         [[topic: topic, partition: partition, replica: replica]]},
+        {Daftka.PartitionReplica.Supervisor, :start_link, [[topic: topic, partition: partition]]},
       type: :supervisor,
       restart: :permanent
     }

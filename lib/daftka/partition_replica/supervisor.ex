@@ -1,6 +1,6 @@
 defmodule Daftka.PartitionReplica.Supervisor do
   @moduledoc """
-  Per-replica supervisor running Raft, Storage, and Server (skeleton).
+  Per-partition supervisor running Storage and Server (MVP, no raft).
 
   Strategy is one_for_all to preserve invariants.
   """
@@ -9,7 +9,6 @@ defmodule Daftka.PartitionReplica.Supervisor do
 
   @type topic :: String.t()
   @type partition :: non_neg_integer()
-  @type replica :: non_neg_integer()
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts) do
@@ -20,20 +19,17 @@ defmodule Daftka.PartitionReplica.Supervisor do
   defp via_name(opts) do
     topic = Keyword.fetch!(opts, :topic)
     partition = Keyword.fetch!(opts, :partition)
-    replica = Keyword.fetch!(opts, :replica)
 
-    {:via, Registry,
-     {Daftka.Registry, {:partition_replica_supervisor, topic, partition, replica}}}
+    {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
   end
 
   @impl true
   def init(opts) do
     topic = Keyword.fetch!(opts, :topic)
     partition = Keyword.fetch!(opts, :partition)
-    replica = Keyword.fetch!(opts, :replica)
 
-    storage_via = storage_name(topic, partition, replica)
-    server_via = server_name(topic, partition, replica)
+    storage_via = storage_name(topic, partition)
+    server_via = server_name(topic, partition)
 
     children = [
       # Raft runtime (placeholder)
@@ -50,18 +46,26 @@ defmodule Daftka.PartitionReplica.Supervisor do
   end
 
   @doc """
-  Resolve the via name for a partition replica's storage process.
+  Resolve the via name for a partition's storage process.
   """
-  @spec storage_name(topic(), partition(), replica()) :: GenServer.name()
-  def storage_name(topic, partition, replica) do
-    {:via, Registry, {Daftka.Registry, {:partition_replica_storage, topic, partition, replica}}}
+  @spec storage_name(topic(), partition()) :: GenServer.name()
+  def storage_name(topic, partition) do
+    {:via, Registry, {Daftka.Registry, {:partition_storage, topic, partition}}}
   end
 
   @doc """
-  Resolve the via name for a partition replica's server process.
+  Resolve the via name for a partition's server process.
   """
-  @spec server_name(topic(), partition(), replica()) :: GenServer.name()
-  def server_name(topic, partition, replica) do
-    {:via, Registry, {Daftka.Registry, {:partition_replica_server, topic, partition, replica}}}
+  @spec server_name(topic(), partition()) :: GenServer.name()
+  def server_name(topic, partition) do
+    {:via, Registry, {Daftka.Registry, {:partition_server, topic, partition}}}
+  end
+
+  @doc """
+  Resolve the via name for the partition supervisor itself.
+  """
+  @spec supervisor_name(topic(), partition()) :: GenServer.name()
+  def supervisor_name(topic, partition) do
+    {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
   end
 end

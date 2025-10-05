@@ -7,10 +7,10 @@ defmodule DaftkaMessageTest do
     {:ok, off} = Types.new_offset(0)
 
     assert {:ok, msg} = Types.new_message(off, "k", "v", %{"a" => "b"})
-    assert Types.message_key(msg) == "k"
-    assert Types.message_value(msg) == "v"
-    assert Types.message_headers(msg) == %{"a" => "b"}
-    assert Types.offset_value(Types.message_offset(msg)) == 0
+    assert msg.key == "k"
+    assert msg.value == "v"
+    assert msg.headers == %{"a" => "b"}
+    assert Types.offset_value(msg.offset) == 0
 
     assert {:error, :invalid_message_key} = Types.new_message(off, 123, "v", %{})
     assert {:error, :invalid_message_value} = Types.new_message(off, "k", 456, %{})

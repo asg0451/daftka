@@ -31,13 +31,13 @@ defmodule DaftkaPartitionStorageTest do
     assert length(msgs) == 2
 
     [m1, m2] = msgs
-    assert Types.message_key(m1) == "k2"
-    assert Types.message_value(m1) == "v2"
-    assert Types.offset_value(Types.message_offset(m1)) == 1
-    assert Types.message_headers(m1) == %{"y" => "b"}
+    assert m1.key == "k2"
+    assert m1.value == "v2"
+    assert Types.offset_value(m1.offset) == 1
+    assert m1.headers == %{"y" => "b"}
 
-    assert Types.message_key(m2) == "k3"
-    assert Types.offset_value(Types.message_offset(m2)) == 2
+    assert m2.key == "k3"
+    assert Types.offset_value(m2.offset) == 2
   end
 
   test "append with invalid args returns error" do
