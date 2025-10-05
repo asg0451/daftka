@@ -19,7 +19,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [x] implement the Metadata api server
 - [x] implement the request router
 - [x] implement the http api gateway
-- [ ] add integration tests to test the whole thing end to end
+- [x] add integration tests to test the whole thing end to end
 
 ## Move to multi node
 - [ ] adopt `libcluster` with the epmd strategy to go multi-node. make sure the test framework can support this. use a simple topology and ensure every process can route to every other process, to start. for example every process on every node must be able to talk to the metadata store.
