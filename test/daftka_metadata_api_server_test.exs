@@ -15,6 +15,11 @@ defmodule DaftkaMetadataAPIServerTest do
 
     assert :ok = MetadataAPI.create_topic("orders")
     assert {:error, :topic_exists} = MetadataAPI.create_topic("orders")
+
+    # create with partitions
+    assert {:error, :invalid_topic} = MetadataAPI.create_topic(123, 3)
+    assert {:error, :invalid_partitions} = MetadataAPI.create_topic("pbad", 0)
+    assert :ok = MetadataAPI.create_topic("p3", 3)
   end
 
   test "get_topic and delete_topic work via names" do
@@ -23,8 +28,9 @@ defmodule DaftkaMetadataAPIServerTest do
 
     assert {:error, :not_found} = MetadataAPI.get_topic("missing")
 
-    :ok = MetadataAPI.create_topic("t1")
-    assert {:ok, %{owners: %{}}} = MetadataAPI.get_topic("t1")
+    :ok = MetadataAPI.create_topic("t1", 2)
+    assert {:ok, %{partitions: parts}} = MetadataAPI.get_topic("t1")
+    assert Map.keys(parts) |> Enum.sort() == [0, 1]
 
     assert :ok = MetadataAPI.delete_topic("t1")
     assert {:error, :not_found} = MetadataAPI.get_topic("t1")

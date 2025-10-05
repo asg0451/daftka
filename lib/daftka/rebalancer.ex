@@ -33,36 +33,45 @@ defmodule Daftka.Rebalancer do
     {:noreply, state}
   end
 
-  # Reconcile desired vs actual for the MVP (single partition per topic: 0)
+  # Reconcile desired vs actual across all partitions for each topic
   defp reconcile do
     topics = Store.list_topics()
 
-    Enum.each(topics, fn {topic, _meta} ->
-      {:ok, p0} = Types.new_partition(0)
+    Enum.each(topics, fn {topic, meta} ->
+      partition_indexes =
+        case meta do
+          %{partitions: parts} when is_map(parts) -> Map.keys(parts)
+          _ -> [0]
+        end
 
-      case Store.get_partition_owner(topic, p0) do
-        {:ok, pid} when is_pid(pid) ->
-          if Process.alive?(pid), do: :ok, else: start_partition_and_record_owner(topic)
+      partition_indexes
+      |> Enum.each(fn idx ->
+        {:ok, p} = Types.new_partition(idx)
 
-        _ ->
-          start_partition_and_record_owner(topic)
-      end
+        case Store.get_partition_owner(topic, p) do
+          {:ok, pid} when is_pid(pid) ->
+            if Process.alive?(pid), do: :ok, else: start_partition_and_record_owner(topic, idx)
+
+          _ ->
+            start_partition_and_record_owner(topic, idx)
+        end
+      end)
     end)
   end
 
-  defp start_partition_and_record_owner(topic) do
+  defp start_partition_and_record_owner(topic, part_index) do
     topic_name = Types.topic_value(topic)
-    id = {topic_name, 0}
+    id = {topic_name, part_index}
 
     _ = ensure_partition_supervisor(id)
 
-    server_via = PartitionReplicaSup.server_name(topic_name, 0)
+    server_via = PartitionReplicaSup.server_name(topic_name, part_index)
     server_pid = GenServer.whereis(server_via)
 
     case server_pid do
       pid when is_pid(pid) ->
-        {:ok, p0} = Types.new_partition(0)
-        :ok = Store.set_partition_owner(topic, p0, pid)
+        {:ok, p} = Types.new_partition(part_index)
+        :ok = Store.set_partition_owner(topic, p, pid)
         :ok
 
       _ ->
