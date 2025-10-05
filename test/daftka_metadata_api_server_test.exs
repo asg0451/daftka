@@ -60,4 +60,28 @@ defmodule DaftkaMetadataAPIServerTest do
     assert %{partitions: parts_orders} = Map.fetch!(topics, "orders")
     assert parts_orders |> Map.keys() |> Enum.sort() == [0, 1]
   end
+
+  describe "wait_for_online/3" do
+    test "returns :ok once server is online" do
+      # start topic; rebalancer will ensure a server starts
+      :ok = MetadataAPI.create_topic("wf_ok", 1)
+
+      assert :ok = MetadataAPI.wait_for_online("wf_ok", 0, 2_000)
+    end
+
+    test "validates inputs" do
+      assert {:error, :invalid_topic} = MetadataAPI.wait_for_online(123, 0, 10)
+      assert {:error, :invalid_topic} = MetadataAPI.wait_for_online(:bad, 0, 10)
+
+      # invalid partition is detected
+      assert {:error, :invalid_partition} = MetadataAPI.wait_for_online("x", -1, 10)
+    end
+
+    test "times out when server not available" do
+      # create a topic name but do not create it in store so rebalancer doesn't start it
+      # ensure timeout happens quickly
+      assert {:error, :timeout} =
+               MetadataAPI.wait_for_online("missing_topic_should_timeout", 0, 100)
+    end
+  end
 end
