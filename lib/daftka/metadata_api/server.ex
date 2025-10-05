@@ -39,18 +39,19 @@ defmodule Daftka.MetadataAPI.Server do
   def create_topic(_), do: {:error, :invalid_topic}
 
   @doc """
-  Delete a topic by name.
+  Create a topic by name with a specific number of partitions.
 
-  Returns `:ok` or `{:error, :invalid_topic | :not_found}`.
+  Returns `:ok` or `{:error, :invalid_topic | :invalid_partitions | :topic_exists}`.
   """
-  @spec delete_topic(String.t()) :: :ok | {:error, :invalid_topic | :not_found}
-  def delete_topic(name) when is_binary(name) do
+  @spec create_topic(String.t(), pos_integer()) ::
+          :ok | {:error, :invalid_topic | :invalid_partitions | :topic_exists}
+  def create_topic(name, partitions) when is_binary(name) and is_integer(partitions) do
     with {:ok, topic} <- Types.new_topic(name) do
-      Store.delete_topic(topic)
+      Store.create_topic(topic, partitions)
     end
   end
 
-  def delete_topic(_), do: {:error, :invalid_topic}
+  def create_topic(_, _), do: {:error, :invalid_topic}
 
   @typedoc """
   Topic metadata value returned by `get_topic/1`.
@@ -71,6 +72,20 @@ defmodule Daftka.MetadataAPI.Server do
   end
 
   def get_topic(_), do: {:error, :invalid_topic}
+
+  @doc """
+  Delete a topic by name.
+
+  Returns `:ok` or `{:error, :invalid_topic | :not_found}`.
+  """
+  @spec delete_topic(String.t()) :: :ok | {:error, :invalid_topic | :not_found}
+  def delete_topic(name) when is_binary(name) do
+    with {:ok, topic} <- Types.new_topic(name) do
+      Store.delete_topic(topic)
+    end
+  end
+
+  def delete_topic(_), do: {:error, :invalid_topic}
 
   @doc """
   List all topics.

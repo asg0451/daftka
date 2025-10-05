@@ -12,10 +12,16 @@ defmodule Daftka.Metadata.Store do
   alias Daftka.Types
 
   # State structs
+  defmodule PartitionMeta do
+    @moduledoc false
+    @enforce_keys [:owner]
+    defstruct owner: nil
+  end
+
   defmodule TopicMeta do
     @moduledoc false
-    @enforce_keys [:owners]
-    defstruct owners: %{}
+    @enforce_keys [:partitions]
+    defstruct partitions: %{}
   end
 
   defmodule State do
@@ -26,7 +32,11 @@ defmodule Daftka.Metadata.Store do
 
   @typedoc "Internal shape of the agent state"
   @opaque state :: %State{
-            topics: %{required(String.t()) => %TopicMeta{owners: %{non_neg_integer() => pid()}}}
+            topics: %{
+              required(String.t()) => %TopicMeta{
+                partitions: %{non_neg_integer() => %PartitionMeta{owner: pid() | nil}}
+              }
+            }
           }
 
   @spec start_link(keyword()) :: Agent.on_start()
@@ -38,7 +48,7 @@ defmodule Daftka.Metadata.Store do
   ## Topic CRUD
 
   @doc """
-  Create a topic.
+  Create a topic with default of 1 partition.
 
   Returns `:ok` or `{:error, reason}` where reason is one of:
   - `:invalid_topic`
@@ -46,31 +56,51 @@ defmodule Daftka.Metadata.Store do
   """
   @spec create_topic(Types.topic()) :: :ok | {:error, :invalid_topic | :topic_exists}
   def create_topic(topic) do
-    case Types.topic?(topic) do
-      true ->
-        topic_key = Types.topic_value(topic)
+    create_topic(topic, 1)
+  end
 
-        Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
-          if Map.has_key?(topics, topic_key) do
-            {{:error, :topic_exists}, state}
-          else
-            updated_topics = Map.put(topics, topic_key, %TopicMeta{owners: %{}})
-            {:ok, %State{state | topics: updated_topics}}
-          end
-        end)
+  @doc """
+  Create a topic with a specific number of partitions.
 
-      false ->
-        {:error, :invalid_topic}
+  Returns `:ok` or `{:error, reason}` where reason is one of:
+  - `:invalid_topic`
+  - `:invalid_partitions`
+  - `:topic_exists`
+  """
+  @spec create_topic(Types.topic(), pos_integer()) ::
+          :ok | {:error, :invalid_topic | :invalid_partitions | :topic_exists}
+  def create_topic(topic, partitions) when is_integer(partitions) and partitions > 0 do
+    with true <- Types.topic?(topic) or {:error, :invalid_topic} do
+      topic_key = Types.topic_value(topic)
+
+      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+        if Map.has_key?(topics, topic_key) do
+          {{:error, :topic_exists}, state}
+        else
+          partition_map =
+            0..(partitions - 1)
+            |> Enum.map(fn idx -> {idx, %PartitionMeta{owner: nil}} end)
+            |> Map.new()
+
+          updated_topics = Map.put(topics, topic_key, %TopicMeta{partitions: partition_map})
+
+          {:ok, %State{state | topics: updated_topics}}
+        end
+      end)
     end
   end
+
+  def create_topic(_topic, _partitions), do: {:error, :invalid_partitions}
 
   @doc """
   Fetch a topic's metadata.
 
   Returns `{:ok, meta}` or `{:error, :invalid_topic | :not_found}`. `meta` contains
-  `:owners` (a map of partition index to owner pid).
+  `:partitions` (a map of partition index to `%PartitionMeta{owner: pid() | nil}`).
   """
-  @type topic_meta :: %TopicMeta{owners: %{non_neg_integer() => pid()}}
+  @type topic_meta :: %TopicMeta{
+          partitions: %{non_neg_integer() => %PartitionMeta{owner: pid() | nil}}
+        }
   @spec get_topic(Types.topic()) :: {:ok, topic_meta} | {:error, :invalid_topic | :not_found}
   def get_topic(topic) do
     if Types.topic?(topic) do
@@ -143,34 +173,23 @@ defmodule Daftka.Metadata.Store do
   @spec set_partition_owner(Types.topic(), Types.partition(), pid()) ::
           :ok | {:error, :invalid_topic | :invalid_partition | :invalid_pid | :not_found}
   def set_partition_owner(topic, partition, owner_pid) do
-    cond do
-      not Types.topic?(topic) ->
-        {:error, :invalid_topic}
+    with true <- Types.topic?(topic) or {:error, :invalid_topic},
+         true <- Types.partition?(partition) or {:error, :invalid_partition},
+         true <- is_pid(owner_pid) or {:error, :invalid_pid} do
+      topic_key = Types.topic_value(topic)
+      partition_index = Types.partition_value(partition)
 
-      not Types.partition?(partition) ->
-        {:error, :invalid_partition}
-
-      not is_pid(owner_pid) ->
-        {:error, :invalid_pid}
-
-      true ->
-        topic_key = Types.topic_value(topic)
-        partition_index = Types.partition_value(partition)
-
-        Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
-          case Map.fetch(topics, topic_key) do
-            :error ->
-              {{:error, :not_found}, state}
-
-            {:ok, %TopicMeta{owners: owners} = meta} ->
-              updated_meta = %TopicMeta{
-                meta
-                | owners: Map.put(owners, partition_index, owner_pid)
-              }
-
-              {:ok, %State{state | topics: Map.put(topics, topic_key, updated_meta)}}
-          end
-        end)
+      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+        with {:ok, %TopicMeta{partitions: partitions} = meta} <- Map.fetch(topics, topic_key),
+             {:ok, %PartitionMeta{} = pmeta} <- Map.fetch(partitions, partition_index) do
+          updated_pmeta = %PartitionMeta{pmeta | owner: owner_pid}
+          updated_partitions = Map.put(partitions, partition_index, updated_pmeta)
+          updated_meta = %TopicMeta{meta | partitions: updated_partitions}
+          {:ok, %State{state | topics: Map.put(topics, topic_key, updated_meta)}}
+        else
+          _ -> {{:error, :not_found}, state}
+        end
+      end)
     end
   end
 
@@ -183,26 +202,20 @@ defmodule Daftka.Metadata.Store do
   @spec get_partition_owner(Types.topic(), Types.partition()) ::
           {:ok, pid()} | {:error, :invalid_topic | :invalid_partition | :not_found}
   def get_partition_owner(topic, partition) do
-    cond do
-      not Types.topic?(topic) ->
-        {:error, :invalid_topic}
+    with true <- Types.topic?(topic) or {:error, :invalid_topic},
+         true <- Types.partition?(partition) or {:error, :invalid_partition} do
+      topic_key = Types.topic_value(topic)
+      partition_index = Types.partition_value(partition)
 
-      not Types.partition?(partition) ->
-        {:error, :invalid_partition}
-
-      true ->
-        topic_key = Types.topic_value(topic)
-        partition_index = Types.partition_value(partition)
-
-        Agent.get(__MODULE__, fn %State{topics: topics} ->
-          with {:ok, %TopicMeta{owners: owners}} <- Map.fetch(topics, topic_key),
-               {:ok, pid} <- Map.fetch(owners, partition_index) do
-            {:ok, pid}
-          else
-            :error -> {:error, :not_found}
-            _ -> {:error, :not_found}
-          end
-        end)
+      Agent.get(__MODULE__, fn %State{topics: topics} ->
+        with {:ok, %TopicMeta{partitions: partitions}} <- Map.fetch(topics, topic_key),
+             {:ok, %PartitionMeta{owner: pid}} <- Map.fetch(partitions, partition_index),
+             true <- is_pid(pid) do
+          {:ok, pid}
+        else
+          _ -> {:error, :not_found}
+        end
+      end)
     end
   end
 end

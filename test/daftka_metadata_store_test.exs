@@ -13,7 +13,8 @@ defmodule DaftkaMetadataStoreTest do
   test "create_topic succeeds and duplicate is rejected" do
     {:ok, topic} = Types.new_topic("orders")
     assert :ok == Store.create_topic(topic)
-    assert {:ok, %{owners: %{}}} = Store.get_topic(topic)
+    assert {:ok, %{partitions: parts}} = Store.get_topic(topic)
+    assert Map.keys(parts) == [0]
     assert {:error, :topic_exists} == Store.create_topic(topic)
   end
 
@@ -45,7 +46,7 @@ defmodule DaftkaMetadataStoreTest do
     assert names == MapSet.new(["a", "b"])
 
     assert Enum.all?(list, fn {topic, meta} ->
-             Types.topic?(topic) and match?(%{owners: _}, meta)
+             Types.topic?(topic) and match?(%{partitions: _}, meta)
            end)
   end
 
@@ -53,7 +54,7 @@ defmodule DaftkaMetadataStoreTest do
     {:ok, topic} = Types.new_topic("with_owners")
     {:ok, p0} = Types.new_partition(0)
     {:ok, p1} = Types.new_partition(1)
-    :ok = Store.create_topic(topic)
+    :ok = Store.create_topic(topic, 2)
 
     owner0 = self()
     assert :ok == Store.set_partition_owner(topic, p0, owner0)
