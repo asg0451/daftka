@@ -10,6 +10,16 @@ defmodule DaftkaDataPlaneTest do
 
   test "router and gateway servers are running" do
     assert Process.whereis(Daftka.Router)
-    assert Process.whereis(Daftka.Gateway.Server)
+    # assert Ranch listener child exists under gateway supervisor (named via :ref)
+    children = Supervisor.which_children(Daftka.Gateway.Supervisor)
+
+    assert Enum.any?(children, fn
+             {{:ranch_embedded_sup, Daftka.Gateway.HTTP}, _pid, :supervisor,
+              [:ranch_embedded_sup]} ->
+               true
+
+             _ ->
+               false
+           end)
   end
 end

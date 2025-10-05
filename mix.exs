@@ -37,6 +37,9 @@ defmodule Daftka.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:plug, "~> 1.15"},
+      {:plug_cowboy, "~> 2.7"},
+      {:jason, "~> 1.4"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}

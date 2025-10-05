@@ -18,7 +18,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [x] implement the Rebalancer as a simple metadata store poller that spawns partition groups
 - [x] implement the Metadata api server
 - [x] implement the request router
-- [ ] implement the http api gateway
+- [x] implement the http api gateway
 - [ ] add integration tests to test the whole thing end to end
 
 ## Move to multi node
