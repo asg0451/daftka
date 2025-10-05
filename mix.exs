@@ -30,7 +30,7 @@ defmodule Daftka.MixProject do
   def application do
     [
       mod: {Daftka.Application, []},
-      extra_applications: [:logger]
+      extra_applications: extra_apps(Mix.env())
     ]
   end
 
@@ -56,4 +56,8 @@ defmodule Daftka.MixProject do
       ]
     ]
   end
+
+  # Development-only extras so IEx can launch the Observer GUI.
+  defp extra_apps(:dev), do: [:logger, :wx, :observer]
+  defp extra_apps(_env), do: [:logger]
 end
