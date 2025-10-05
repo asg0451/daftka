@@ -40,6 +40,9 @@ defmodule Daftka.MixProject do
       {:plug, "~> 1.15"},
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
+      # clustering and distributed process registry
+      {:libcluster, "~> 3.3"},
+      {:swarm, "~> 3.4"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
@@ -55,8 +58,11 @@ defmodule Daftka.MixProject do
         "dialyzer",
         "test",
         # ensure docs run in dev env where ex_doc is available
-        "cmd MIX_ENV=dev mix docs"
-      ]
+        "cmd MIX_ENV=dev mix docs",
+        # multi-node smoke test
+        "cmd ./scripts/multinode_integration.sh"
+      ],
+      integration: ["cmd ./scripts/multinode_integration.sh"]
     ]
   end
 

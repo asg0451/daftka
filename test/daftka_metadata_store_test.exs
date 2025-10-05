@@ -5,7 +5,6 @@ defmodule DaftkaMetadataStoreTest do
   alias Daftka.Types
 
   setup do
-    assert Process.whereis(Store)
     Store.clear()
     :ok
   end

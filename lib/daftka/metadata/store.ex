@@ -8,6 +8,9 @@ defmodule Daftka.Metadata.Store do
   """
 
   use Agent
+  @name {:via, :swarm, __MODULE__}
+
+  defp server, do: @name
 
   alias Daftka.Types
 
@@ -42,7 +45,11 @@ defmodule Daftka.Metadata.Store do
   @spec start_link(keyword()) :: Agent.on_start()
   def start_link(opts \\ []) do
     initial_state = %State{topics: %{}}
-    Agent.start_link(fn -> initial_state end, Keyword.merge([name: __MODULE__], opts))
+
+    # Register globally with Swarm so there's a single logical store across nodes
+    name = {:via, :swarm, __MODULE__}
+
+    Agent.start_link(fn -> initial_state end, Keyword.merge([name: name], opts))
   end
 
   ## Topic CRUD
@@ -73,7 +80,7 @@ defmodule Daftka.Metadata.Store do
     with true <- Types.topic?(topic) or {:error, :invalid_topic} do
       topic_key = Types.topic_value(topic)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(server(), fn %State{topics: topics} = state ->
         if Map.has_key?(topics, topic_key) do
           {{:error, :topic_exists}, state}
         else
@@ -106,7 +113,7 @@ defmodule Daftka.Metadata.Store do
     if Types.topic?(topic) do
       topic_key = Types.topic_value(topic)
 
-      Agent.get(__MODULE__, fn %State{topics: topics} ->
+      Agent.get(server(), fn %State{topics: topics} ->
         case Map.fetch(topics, topic_key) do
           {:ok, meta} -> {:ok, meta}
           :error -> {:error, :not_found}
@@ -124,7 +131,7 @@ defmodule Daftka.Metadata.Store do
   """
   @spec list_topics() :: [{Types.topic(), topic_meta}]
   def list_topics do
-    Agent.get(__MODULE__, fn %State{topics: topics} ->
+    Agent.get(server(), fn %State{topics: topics} ->
       Enum.map(topics, fn {name, meta} ->
         {:ok, typed} = Types.new_topic(name)
         {typed, meta}
@@ -142,7 +149,7 @@ defmodule Daftka.Metadata.Store do
   """
   @spec dump() :: state()
   def dump do
-    Agent.get(__MODULE__, fn %State{} = state -> state end)
+    Agent.get(server(), fn %State{} = state -> state end)
   end
 
   @doc """
@@ -155,7 +162,7 @@ defmodule Daftka.Metadata.Store do
     if Types.topic?(topic) do
       topic_key = Types.topic_value(topic)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(server(), fn %State{topics: topics} = state ->
         if Map.has_key?(topics, topic_key) do
           {:ok, %State{state | topics: Map.delete(topics, topic_key)}}
         else
@@ -172,7 +179,7 @@ defmodule Daftka.Metadata.Store do
   @doc false
   @spec clear() :: :ok
   def clear do
-    Agent.update(__MODULE__, fn _ -> %State{topics: %{}} end)
+    Agent.update(server(), fn _ -> %State{topics: %{}} end)
   end
 
   ## Partition owners
@@ -192,7 +199,7 @@ defmodule Daftka.Metadata.Store do
       topic_key = Types.topic_value(topic)
       partition_index = Types.partition_value(partition)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(server(), fn %State{topics: topics} = state ->
         with {:ok, %TopicMeta{partitions: partitions} = meta} <- Map.fetch(topics, topic_key),
              {:ok, %PartitionMeta{} = pmeta} <- Map.fetch(partitions, partition_index) do
           updated_pmeta = %PartitionMeta{pmeta | owner: owner_pid}
@@ -220,7 +227,7 @@ defmodule Daftka.Metadata.Store do
       topic_key = Types.topic_value(topic)
       partition_index = Types.partition_value(partition)
 
-      Agent.get(__MODULE__, fn %State{topics: topics} ->
+      Agent.get(server(), fn %State{topics: topics} ->
         with {:ok, %TopicMeta{partitions: partitions}} <- Map.fetch(topics, topic_key),
              {:ok, %PartitionMeta{owner: pid}} <- Map.fetch(partitions, partition_index),
              true <- is_pid(pid) do
