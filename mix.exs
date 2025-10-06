@@ -41,7 +41,7 @@ defmodule Daftka.MixProject do
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
       # clustering and distributed process registry
-      {:libcluster, "~> 3.3"},
+      {:libcluster, "~> 3.5"},
       {:swarm, "~> 3.4"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
