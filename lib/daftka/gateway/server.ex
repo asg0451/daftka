@@ -8,9 +8,9 @@ defmodule Daftka.Gateway.Server do
   use Plug.Router
   use Plug.ErrorHandler
 
+  alias Daftka.Metadata.Store
   alias Daftka.Router
   alias Daftka.Types
-  alias Daftka.Metadata.Store
 
   plug(Plug.Logger)
   plug(:match)
@@ -46,11 +46,9 @@ defmodule Daftka.Gateway.Server do
         :ok -> json(conn, 201, %{ok: true})
         {:error, :topic_exists} -> json(conn, 409, %{error: "topic_exists"})
         {:error, :invalid_partitions} -> json(conn, 400, %{error: "invalid_partitions"})
-        {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
       end
     else
       {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
-      _ -> json(conn, 400, %{error: "invalid_body"})
     end
   end
 
