@@ -22,7 +22,12 @@ defmodule Daftka.Rebalancer do
 
     case :swarm.whereis_name(__MODULE__) do
       pid when is_pid(pid) -> {:ok, pid}
-      _ -> GenServer.start_link(__MODULE__, opts, name: name)
+      _ ->
+        case GenServer.start_link(__MODULE__, opts, name: name) do
+          {:ok, pid} -> {:ok, pid}
+          {:error, {:already_started, pid}} -> {:ok, pid}
+          other -> other
+        end
     end
   end
 
