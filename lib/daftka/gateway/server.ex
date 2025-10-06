@@ -8,9 +8,9 @@ defmodule Daftka.Gateway.Server do
   use Plug.Router
   use Plug.ErrorHandler
 
+  alias Daftka.Metadata.Store
   alias Daftka.Router
   alias Daftka.Types
-  alias Daftka.Metadata.Store
 
   plug(Plug.Logger)
   plug(:match)

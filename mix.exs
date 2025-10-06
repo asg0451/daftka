@@ -55,6 +55,8 @@ defmodule Daftka.MixProject do
         "format --check-formatted",
         "compile --warnings-as-errors",
         "credo --strict",
+        # ensure dialyzer PLT path exists locally
+        "cmd mkdir -p priv/plts",
         "dialyzer",
         "test",
         # ensure docs run in dev env where ex_doc is available
