@@ -25,9 +25,11 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [ ] go multi-node.
     - use epmd node discovery
     - use https://github.com/uwiger/gproc for global process registry and stuff.
-    - make sure the test framework can support this.
+    - leave the unit test framework as is for now.
     - ensure every process can route to every other process. for example every process on every node must be able to talk to the metadata store.
-    - i want to be able to specify that nodes can run the control plane, data plane, or both
+    - i want to be able to specify that nodes can run the control plane, data plane, or both. config should be like `roles: [:control_plane, :data_plane]`
+    - more than one node should be able to run the control plane, while maintaining singleton invariants (to the extent possible) -- and if one goes down, another should pick up the slack (HA)
+    - add an e2e bash script to do a basic test of all this on 2 nodes running locally. it must pass before you declare success.
 - [ ] add another topology category for the http gateway
 - [ ] rewrite the Metadata Store to be a raft group using https://github.com/rabbitmq/ra. factor it to make it easy to make other raft groups in the future (for the partition groups). see https://github.com/rabbitmq/ra/blob/main/docs/internals/STATE_MACHINE_TUTORIAL.md and https://github.com/rabbitmq/ra-examples/blob/master/elixir_rakv/lib/ra_kv/machine.ex as well as examples.
 - [ ] rewrite the storage module to use rocksdb to store data
