@@ -40,6 +40,7 @@ defmodule Daftka.MixProject do
       {:plug, "~> 1.15"},
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
+      {:gproc, "~> 0.9"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
@@ -61,6 +62,6 @@ defmodule Daftka.MixProject do
   end
 
   # Development-only extras so IEx can launch the Observer GUI.
-  defp extra_apps(:dev), do: [:logger, :wx, :observer]
-  defp extra_apps(_env), do: [:logger]
+  defp extra_apps(:dev), do: [:logger, :wx, :observer, :gproc]
+  defp extra_apps(_env), do: [:logger, :gproc]
 end

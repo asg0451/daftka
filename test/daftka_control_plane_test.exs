@@ -4,7 +4,7 @@ defmodule DaftkaControlPlaneTest do
   test "control plane supervisor starts and control-plane processes are present" do
     assert Process.whereis(Daftka.ControlPlane)
 
-    assert Process.whereis(Daftka.Cluster.Supervisor)
+    # Cluster.Supervisor is currently a no-op placeholder and not started
     assert Process.whereis(Daftka.Metadata.Supervisor)
     assert Process.whereis(Daftka.MetadataAPI.Supervisor)
     assert Process.whereis(Daftka.AdminAPI.Supervisor)

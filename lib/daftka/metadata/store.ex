@@ -42,7 +42,40 @@ defmodule Daftka.Metadata.Store do
   @spec start_link(keyword()) :: Agent.on_start()
   def start_link(opts \\ []) do
     initial_state = %State{topics: %{}}
-    Agent.start_link(fn -> initial_state end, Keyword.merge([name: __MODULE__], opts))
+    default_name = server_name()
+    name = Keyword.get(opts, :name, default_name)
+
+    case Agent.start_link(fn -> initial_state end, Keyword.merge([name: name], opts)) do
+      {:ok, pid} = ok ->
+        # Also register a local alias for compatibility with tests
+        try do
+          Process.register(pid, __MODULE__)
+        rescue
+          ArgumentError -> :ok
+        end
+
+        ok
+
+      other ->
+        other
+    end
+  end
+
+  @doc false
+  @spec server_name() :: GenServer.name()
+  def server_name do
+    Daftka.Naming.via({:daftka, :metadata_store})
+  end
+
+  @doc false
+  @spec name_for_calls() :: GenServer.server()
+  defp name_for_calls do
+    # When local registry is used, Process.register/2 sets __MODULE__ locally so tests using
+    # Store module as name continue to work. Otherwise, use the via name.
+    case Process.whereis(__MODULE__) do
+      pid when is_pid(pid) -> __MODULE__
+      _ -> server_name()
+    end
   end
 
   ## Topic CRUD
@@ -106,7 +139,7 @@ defmodule Daftka.Metadata.Store do
     if Types.topic?(topic) do
       topic_key = Types.topic_value(topic)
 
-      Agent.get(__MODULE__, fn %State{topics: topics} ->
+      Agent.get(name_for_calls(), fn %State{topics: topics} ->
         case Map.fetch(topics, topic_key) do
           {:ok, meta} -> {:ok, meta}
           :error -> {:error, :not_found}
@@ -124,7 +157,7 @@ defmodule Daftka.Metadata.Store do
   """
   @spec list_topics() :: [{Types.topic(), topic_meta}]
   def list_topics do
-    Agent.get(__MODULE__, fn %State{topics: topics} ->
+    Agent.get(name_for_calls(), fn %State{topics: topics} ->
       Enum.map(topics, fn {name, meta} ->
         {:ok, typed} = Types.new_topic(name)
         {typed, meta}
@@ -142,7 +175,7 @@ defmodule Daftka.Metadata.Store do
   """
   @spec dump() :: state()
   def dump do
-    Agent.get(__MODULE__, fn %State{} = state -> state end)
+    Agent.get(name_for_calls(), fn %State{} = state -> state end)
   end
 
   @doc """
@@ -155,7 +188,7 @@ defmodule Daftka.Metadata.Store do
     if Types.topic?(topic) do
       topic_key = Types.topic_value(topic)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(name_for_calls(), fn %State{topics: topics} = state ->
         if Map.has_key?(topics, topic_key) do
           {:ok, %State{state | topics: Map.delete(topics, topic_key)}}
         else
@@ -172,7 +205,7 @@ defmodule Daftka.Metadata.Store do
   @doc false
   @spec clear() :: :ok
   def clear do
-    Agent.update(__MODULE__, fn _ -> %State{topics: %{}} end)
+    Agent.update(name_for_calls(), fn _ -> %State{topics: %{}} end)
   end
 
   ## Partition owners
@@ -192,7 +225,7 @@ defmodule Daftka.Metadata.Store do
       topic_key = Types.topic_value(topic)
       partition_index = Types.partition_value(partition)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(name_for_calls(), fn %State{topics: topics} = state ->
         with {:ok, %TopicMeta{partitions: partitions} = meta} <- Map.fetch(topics, topic_key),
              {:ok, %PartitionMeta{} = pmeta} <- Map.fetch(partitions, partition_index) do
           updated_pmeta = %PartitionMeta{pmeta | owner: owner_pid}
@@ -220,7 +253,7 @@ defmodule Daftka.Metadata.Store do
       topic_key = Types.topic_value(topic)
       partition_index = Types.partition_value(partition)
 
-      Agent.get(__MODULE__, fn %State{topics: topics} ->
+      Agent.get(name_for_calls(), fn %State{topics: topics} ->
         with {:ok, %TopicMeta{partitions: partitions}} <- Map.fetch(topics, topic_key),
              {:ok, %PartitionMeta{owner: pid}} <- Map.fetch(partitions, partition_index),
              true <- is_pid(pid) do

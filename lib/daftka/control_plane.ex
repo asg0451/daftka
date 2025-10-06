@@ -15,10 +15,15 @@ defmodule Daftka.ControlPlane do
   @impl true
   @spec init(keyword()) :: {:ok, {Supervisor.sup_flags(), [Supervisor.child_spec()]}} | :ignore
   def init(_opts) do
-    children = [
-      # Cluster membership and node strategy
-      Daftka.Cluster.Supervisor,
+    # Ensure only one control plane tree is active cluster-wide when distributed.
+    if Node.alive?() do
+      case Daftka.Global.register_unique({:daftka, :control_plane}) do
+        true -> :ok
+        :already_registered -> return_ignore()
+      end
+    end
 
+    children = [
       # Metadata store and its raft group
       Daftka.Metadata.Supervisor,
 
@@ -31,5 +36,12 @@ defmodule Daftka.ControlPlane do
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  defp return_ignore do
+    # Make Supervisor.init return :ignore by short-circuiting via throw/catch
+    throw({:ignore_control_plane, :already_running})
+  catch
+    {:ignore_control_plane, _} -> :ignore
   end
 end

@@ -15,10 +15,20 @@ defmodule Daftka.Metadata.Supervisor do
   @impl true
   def init(_opts) do
     children = [
-      # In-memory metadata store (MVP)
-      Daftka.Metadata.Store
+      %{
+        id: :metadata_store_singleton,
+        start: {__MODULE__, :start_singleton_store, []},
+        type: :worker,
+        restart: :permanent
+      }
     ]
 
     Supervisor.init(children, strategy: :rest_for_one)
+  end
+
+  @doc false
+  @spec start_singleton_store() :: Agent.on_start()
+  def start_singleton_store do
+    Daftka.Metadata.Store.start_link()
   end
 end
