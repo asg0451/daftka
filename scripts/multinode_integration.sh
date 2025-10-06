@@ -56,6 +56,7 @@ SUFFIX=$(date +%s%N | tail -c 8)
 N1="daftka1_${SUFFIX}"
 N2="daftka2_${SUFFIX}"
 CLUSTER_HOSTS="${N1}@${HNAME},${N2}@${HNAME}"
+export DAFTKA_CLUSTER_HOSTS="$CLUSTER_HOSTS"
 
 # Start node1 (control+data plane)
 mkdir -p tmp/log
@@ -82,6 +83,19 @@ wait_http_ok() {
   return 1
 }
 
+wait_partition_online() {
+  local port=$1
+  local topic=$2
+  local part=${3:-0}
+  for i in {1..80}; do
+    if curl -fsS "http://localhost:${port}/topics/${topic}/partitions/${part}/next_offset" >/dev/null; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
+}
+
 wait_http_ok $PORT1 || { echo "Node1 failed to become healthy"; tail -n +1 tmp/log/*; exit 1; }
 wait_http_ok $PORT2 || { echo "Node2 failed to become healthy"; tail -n +1 tmp/log/*; exit 1; }
 
@@ -90,8 +104,8 @@ curl -fsS -X POST -H 'content-type: application/json' \
   -d '{"name":"cluster_topic","partitions":1}' \
   "http://localhost:${PORT1}/topics"
 
-# Wait a moment for rebalancer to start the partition
-sleep 0.5
+# Wait for partition to be brought online by the rebalancer
+wait_partition_online $PORT1 cluster_topic 0 || { echo "Partition did not become online"; tail -n +1 tmp/log/*; exit 1; }
 
 # Produce via node2
 RESP=$(curl -fsS -X POST -H 'content-type: application/json' \
