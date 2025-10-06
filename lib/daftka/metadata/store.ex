@@ -49,7 +49,10 @@ defmodule Daftka.Metadata.Store do
     # Register globally with Swarm so there's a single logical store across nodes
     name = {:via, :swarm, __MODULE__}
 
-    Agent.start_link(fn -> initial_state end, Keyword.merge([name: name], opts))
+    case :swarm.whereis_name(__MODULE__) do
+      pid when is_pid(pid) -> {:ok, pid}
+      _ -> Agent.start_link(fn -> initial_state end, Keyword.merge([name: name], opts))
+    end
   end
 
   ## Topic CRUD

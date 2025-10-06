@@ -19,7 +19,10 @@ defmodule Daftka.Rebalancer do
   def start_link(opts \\ []) do
     # Run as a Swarm singleton across the cluster
     name = {:via, :swarm, __MODULE__}
-    GenServer.start_link(__MODULE__, opts, name: name)
+    case :swarm.whereis_name(__MODULE__) do
+      pid when is_pid(pid) -> {:ok, pid}
+      _ -> GenServer.start_link(__MODULE__, opts, name: name)
+    end
   end
 
   @impl true

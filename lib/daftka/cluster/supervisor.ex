@@ -35,7 +35,10 @@ defmodule Daftka.Cluster.Supervisor do
     [
       daftka_epmd: [
         strategy: Cluster.Strategy.Epmd,
-        config: [hosts: hosts]
+        config: [hosts: hosts],
+        connect: {:net_kernel, :connect_node, []},
+        disconnect: {:erlang, :disconnect_node, []},
+        list_nodes: {:erlang, :nodes, [:connected]}
       ]
     ]
   end
