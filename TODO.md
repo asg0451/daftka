@@ -22,7 +22,7 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [x] add integration tests to test the whole thing end to end
 
 ## Move to multi node
-- [ ] adopt `libcluster` with the epmd strategy to go multi-node. make sure the test framework can support this. use a simple topology and ensure every process can route to every other process, to start. for example every process on every node must be able to talk to the metadata store.
+- [ ] go multi-node. make sure the test framework can support this. use a simple topology and ensure every process can route to every other process, to start. for example every process on every node must be able to talk to the metadata store.
 - [ ] separate the control plane node set from the data plane one -- they may overlap in dev but must be separable.
 - [ ] assign control plane processes to the control plane node set and vice versa. this may involve supervisor tree changes
 - [ ] support adding and removing nodes from the cluster -- discovery via epmd
