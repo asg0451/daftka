@@ -42,12 +42,12 @@ mix deps.get > /dev/null
 mix compile > /dev/null
 
 # Start node1 (control+data plane)
-DAFTKA_NODE_NAME="daftka1@127.0.0.1" DAFTKA_ENABLE_CP=1 DAFTKA_ENABLE_DP=1 DAFTKA_GATEWAY_PORT=$PORT1 DAFTKA_CLUSTER_HOSTS="daftka1@127.0.0.1,daftka2@127.0.0.1" \
+DAFTKA_NODE_NAME="daftka1@127.0.0.1" DAFTKA_ROLES=control_plane,data_plane DAFTKA_GATEWAY_PORT=$PORT1 DAFTKA_CLUSTER_HOSTS="daftka1@127.0.0.1,daftka2@127.0.0.1" \
   elixir --erl "-setcookie $COOKIE" --name daftka1@127.0.0.1 -S mix run --no-halt &
 NODE1_PID=$!
 
 # Start node2 (data plane only)
-DAFTKA_NODE_NAME="daftka2@127.0.0.1" DAFTKA_ENABLE_CP=0 DAFTKA_ENABLE_DP=1 DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="daftka1@127.0.0.1,daftka2@127.0.0.1" \
+DAFTKA_NODE_NAME="daftka2@127.0.0.1" DAFTKA_ROLES=data_plane DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="daftka1@127.0.0.1,daftka2@127.0.0.1" \
   elixir --erl "-setcookie $COOKIE" --name daftka2@127.0.0.1 -S mix run --no-halt &
 NODE2_PID=$!
 

@@ -10,8 +10,9 @@ defmodule Daftka.Application do
   @impl true
   @spec start(Application.start_type(), term()) :: Supervisor.on_start()
   def start(_type, _args) do
-    enable_cp = Application.get_env(:daftka, :enable_control_plane, true)
-    enable_dp = Application.get_env(:daftka, :enable_data_plane, true)
+    roles = Application.get_env(:daftka, :roles, [:control_plane, :data_plane])
+    enable_cp = :control_plane in roles
+    enable_dp = :data_plane in roles
 
     children =
       [
