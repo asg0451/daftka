@@ -25,6 +25,8 @@ Execute items from this list. When finished, make sure you check it off. See PLA
 - [ ] adopt `libcluster` with the epmd strategy to go multi-node. make sure the test framework can support this. use a simple topology and ensure every process can route to every other process, to start. for example every process on every node must be able to talk to the metadata store.
 - [ ] separate the control plane node set from the data plane one -- they may overlap in dev but must be separable.
 - [ ] assign control plane processes to the control plane node set and vice versa. this may involve supervisor tree changes
+- [ ] support adding and removing nodes from the cluster -- discovery via epmd
+- [ ] add another topology category for the http gateway
 - [ ] rewrite the Metadata Store to be a raft group using https://github.com/rabbitmq/ra. factor it to make it easy to make other raft groups in the future (for the partition groups). see https://github.com/rabbitmq/ra/blob/main/docs/internals/STATE_MACHINE_TUTORIAL.md and https://github.com/rabbitmq/ra-examples/blob/master/elixir_rakv/lib/ra_kv/machine.ex as well as examples.
 - [ ] rewrite the storage module to use rocksdb to store data
 - [ ] rewrite the partition group to be a raft group of partition replica servers, using `ra` like in the metadata store
