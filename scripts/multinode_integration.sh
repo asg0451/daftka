@@ -65,12 +65,6 @@ DAFTKA_NODE_NAME="${N1}@${HNAME}" DAFTKA_ROLES=control_plane,data_plane DAFTKA_G
   --sname ${N1} -S mix run --no-halt > tmp/log/node1.log 2>&1 &
 NODE1_PID=$!
 
-# Start node2 (control+data plane)
-DAFTKA_NODE_NAME="${N2}@${HNAME}" DAFTKA_ROLES=control_plane,data_plane DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="$CLUSTER_HOSTS" \
-  elixir --erl "-kernel inet_dist_listen_min $DIST_MIN inet_dist_listen_max $DIST_MAX -setcookie $COOKIE" \
-  --sname ${N2} -S mix run --no-halt > tmp/log/node2.log 2>&1 &
-NODE2_PID=$!
-
 # Wait for gateways to become healthy
 wait_http_ok() {
   local port=$1
@@ -96,8 +90,19 @@ wait_partition_online() {
   return 1
 }
 
+wait_topic_visible() {
+  local port=$1
+  local topic=$2
+  for i in {1..80}; do
+    if curl -fsS "http://localhost:${port}/topics" | jq -e --arg t "$topic" '.topics[] | select(.name==$t)' >/dev/null; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
+}
+
 wait_http_ok $PORT1 || { echo "Node1 failed to become healthy"; tail -n +1 tmp/log/*; exit 1; }
-wait_http_ok $PORT2 || { echo "Node2 failed to become healthy"; tail -n +1 tmp/log/*; exit 1; }
 
 # Create a topic via node1
 curl -fsS -X POST -H 'content-type: application/json' \
@@ -106,6 +111,17 @@ curl -fsS -X POST -H 'content-type: application/json' \
 
 # Wait for partition to be brought online by the rebalancer
 wait_partition_online $PORT1 cluster_topic 0 || { echo "Partition did not become online"; tail -n +1 tmp/log/*; exit 1; }
+
+# Now start node2 after node1 established cluster_topic
+DAFTKA_NODE_NAME="${N2}@${HNAME}" DAFTKA_ROLES=control_plane,data_plane DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="$CLUSTER_HOSTS" \
+  elixir --erl "-kernel inet_dist_listen_min $DIST_MIN inet_dist_listen_max $DIST_MAX -setcookie $COOKIE" \
+  --sname ${N2} -S mix run --no-halt > tmp/log/node2.log 2>&1 &
+NODE2_PID=$!
+
+wait_http_ok $PORT2 || { echo "Node2 failed to become healthy"; tail -n +1 tmp/log/*; exit 1; }
+
+# Ensure node2 can see the topic before producing
+wait_topic_visible $PORT2 cluster_topic || { echo "Topic not visible on node2"; tail -n +1 tmp/log/*; exit 1; }
 
 # Produce via node2
 RESP=$(curl -fsS -X POST -H 'content-type: application/json' \

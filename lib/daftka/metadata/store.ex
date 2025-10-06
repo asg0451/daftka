@@ -13,6 +13,7 @@ defmodule Daftka.Metadata.Store do
   defp server, do: @name
 
   alias Daftka.Types
+  alias Swarm
 
   # State structs
   defmodule PartitionMeta do
@@ -43,15 +44,15 @@ defmodule Daftka.Metadata.Store do
           }
 
   @spec start_link(keyword()) :: Agent.on_start()
-  def start_link(opts \\ []) do
+  def start_link(_opts \\ []) do
     initial_state = %State{topics: %{}}
 
-    # Register globally with Swarm so there's a single logical store across nodes
-    name = {:via, :swarm, __MODULE__}
-
-    case :swarm.whereis_name(__MODULE__) do
-      pid when is_pid(pid) -> {:ok, pid}
-      _ -> Agent.start_link(fn -> initial_state end, Keyword.merge([name: name], opts))
+    # Let Swarm coordinate a single start across the cluster
+    case Swarm.register_name(__MODULE__, Agent, :start_link, [fn -> initial_state end, []]) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_registered, pid}} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+      other -> other
     end
   end
 
