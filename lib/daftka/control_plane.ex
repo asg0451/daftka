@@ -20,7 +20,7 @@ defmodule Daftka.ControlPlane do
       Daftka.Cluster.Supervisor,
 
       # Metadata store and its raft group
-      Daftka.Metadata.Supervisor,
+      {Daftka.Metadata.Supervisor, []},
 
       # Control plane APIs (skeletons)
       Daftka.MetadataAPI.Supervisor,

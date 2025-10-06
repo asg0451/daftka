@@ -8,9 +8,9 @@ defmodule Daftka.Gateway.Server do
   use Plug.Router
   use Plug.ErrorHandler
 
+  alias Daftka.Metadata.Store
   alias Daftka.Router
   alias Daftka.Types
-  alias Daftka.Metadata.Store
 
   plug(Plug.Logger)
   plug(:match)
@@ -50,7 +50,6 @@ defmodule Daftka.Gateway.Server do
       end
     else
       {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
-      _ -> json(conn, 400, %{error: "invalid_body"})
     end
   end
 
@@ -87,7 +86,6 @@ defmodule Daftka.Gateway.Server do
       {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
       {:error, :invalid_partition} -> json(conn, 400, %{error: "invalid_partition"})
       :error -> json(conn, 400, %{error: "invalid_partition"})
-      _ -> json(conn, 400, %{error: "invalid_body"})
     end
   end
 
@@ -124,7 +122,6 @@ defmodule Daftka.Gateway.Server do
       {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
       {:error, :invalid_partition} -> json(conn, 400, %{error: "invalid_partition"})
       {:error, :invalid_offset} -> json(conn, 400, %{error: "invalid_offset"})
-      _ -> json(conn, 400, %{error: "invalid_query"})
     end
   end
 
@@ -141,7 +138,6 @@ defmodule Daftka.Gateway.Server do
     else
       {:error, :invalid_topic} -> json(conn, 400, %{error: "invalid_topic"})
       {:error, :invalid_partition} -> json(conn, 400, %{error: "invalid_partition"})
-      _ -> json(conn, 400, %{error: "invalid_path"})
     end
   end
 

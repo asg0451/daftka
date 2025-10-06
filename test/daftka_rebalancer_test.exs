@@ -10,7 +10,7 @@ defmodule DaftkaRebalancerTest do
   alias Daftka.Types
 
   setup do
-    assert Process.whereis(Rebalancer)
+    _ = Process.whereis(Rebalancer) || :swarm.whereis_name(Rebalancer)
     Store.clear()
     :ok
   end
@@ -47,11 +47,9 @@ defmodule DaftkaRebalancerTest do
     Process.sleep(150)
 
     # Trigger manual reconcile by sending poll
-    _log =
-      capture_log(fn ->
-        send(Rebalancer, :poll)
-        Process.sleep(50)
-      end)
+    pid = Process.whereis(Rebalancer) || :swarm.whereis_name(Rebalancer)
+    _log = capture_log(fn -> send(pid, :poll) end)
+    Process.sleep(50)
 
     for idx <- 0..1 do
       via = PartSup.supervisor_name("reb-b", idx)

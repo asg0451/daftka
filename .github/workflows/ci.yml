@@ -17,7 +17,7 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: '1.18.1'
+          elixir-version: '1.18.4'
           otp-version: '27'
 
       - name: Cache Mix deps
@@ -32,6 +32,9 @@ jobs:
 
       - name: Install deps
         run: mix deps.get
+
+      - name: Install OS tools (curl, jq)
+        run: sudo apt-get update && sudo apt-get install -y curl jq
 
       - name: Format check
         run: mix format --check-formatted
@@ -50,6 +53,9 @@ jobs:
 
       - name: Tests
         run: mix test
+
+      - name: Multi-node integration (Erlang distribution)
+        run: ./scripts/multinode_integration.sh
 
       - name: Docs
         run: MIX_ENV=dev mix docs

@@ -8,6 +8,7 @@ defmodule DaftkaControlPlaneTest do
     assert Process.whereis(Daftka.Metadata.Supervisor)
     assert Process.whereis(Daftka.MetadataAPI.Supervisor)
     assert Process.whereis(Daftka.AdminAPI.Supervisor)
-    assert Process.whereis(Daftka.Rebalancer)
+    pid = Process.whereis(Daftka.Rebalancer) || :swarm.whereis_name(Daftka.Rebalancer)
+    assert is_pid(pid)
   end
 end
