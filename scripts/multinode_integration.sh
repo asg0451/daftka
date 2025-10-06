@@ -64,8 +64,8 @@ DAFTKA_NODE_NAME="${N1}@${HNAME}" DAFTKA_ROLES=control_plane,data_plane DAFTKA_G
   --sname ${N1} -S mix run --no-halt > tmp/log/node1.log 2>&1 &
 NODE1_PID=$!
 
-# Start node2 (data plane only)
-DAFTKA_NODE_NAME="${N2}@${HNAME}" DAFTKA_ROLES=data_plane DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="$CLUSTER_HOSTS" \
+# Start node2 (control+data plane)
+DAFTKA_NODE_NAME="${N2}@${HNAME}" DAFTKA_ROLES=control_plane,data_plane DAFTKA_GATEWAY_PORT=$PORT2 DAFTKA_CLUSTER_HOSTS="$CLUSTER_HOSTS" \
   elixir --erl "-kernel inet_dist_listen_min $DIST_MIN inet_dist_listen_max $DIST_MAX -setcookie $COOKIE" \
   --sname ${N2} -S mix run --no-halt > tmp/log/node2.log 2>&1 &
 NODE2_PID=$!
