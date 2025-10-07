@@ -77,7 +77,7 @@ defmodule Daftka.Metadata.Store do
     with true <- Types.topic?(topic) or {:error, :invalid_topic} do
       topic_key = Types.topic_value(topic)
 
-    Agent.get_and_update(name(), fn %State{topics: topics} = state ->
+      Agent.get_and_update(name(), fn %State{topics: topics} = state ->
         if Map.has_key?(topics, topic_key) do
           {{:error, :topic_exists}, state}
         else

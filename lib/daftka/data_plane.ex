@@ -9,11 +9,12 @@ defmodule Daftka.DataPlane do
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:data_plane}))
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
   def init(_opts) do
+    _ = :gproc.reg(Daftka.Naming.key_global({:data_plane}))
     children = [
       Daftka.Router.Supervisor,
       Daftka.Gateway.Supervisor,

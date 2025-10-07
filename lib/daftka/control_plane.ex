@@ -9,12 +9,14 @@ defmodule Daftka.ControlPlane do
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:control_plane}))
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
   @spec init(keyword()) :: {:ok, {Supervisor.sup_flags(), [Supervisor.child_spec()]}} | :ignore
   def init(_opts) do
+    # Register a global gproc alias for discovery/testing
+    _ = :gproc.reg(Daftka.Naming.key_global({:control_plane}))
     children = [
       # Cluster membership and node strategy
       Daftka.Cluster.Supervisor,

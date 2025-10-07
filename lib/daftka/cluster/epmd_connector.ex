@@ -30,7 +30,9 @@ defmodule Daftka.Cluster.EPMDConnector do
 
   defp read_peers do
     case System.get_env("DAFTKA_CONNECT_TO") do
-      nil -> []
+      nil ->
+        []
+
       str ->
         str
         |> String.split(",", trim: true)

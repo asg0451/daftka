@@ -12,9 +12,6 @@ defmodule Daftka.Application do
   def start(_type, _args) do
     roles = Application.get_env(:daftka, :role, [:control_plane, :data_plane])
 
-    # Ensure gproc is started (should be in extra_applications too)
-    _ = :gproc.start_link()
-
     children =
       role_children(roles)
 
@@ -27,11 +24,13 @@ defmodule Daftka.Application do
     roles_set = MapSet.new(roles)
     children = []
 
-    children = if :control_plane in roles_set, do: children ++ [Daftka.ControlPlane], else: children
+    children =
+      if :control_plane in roles_set, do: children ++ [Daftka.ControlPlane], else: children
+
     children = if :data_plane in roles_set, do: children ++ [Daftka.DataPlane], else: children
     # Only add standalone gateway if data_plane is NOT present
     children =
-      if :http_gateway in roles_set and not (:data_plane in roles_set) do
+      if :http_gateway in roles_set and :data_plane not in roles_set do
         children ++ [Daftka.Gateway.Supervisor]
       else
         children
@@ -40,6 +39,7 @@ defmodule Daftka.Application do
     children
   end
 
-  # legacy helper retained for readability during refactors
+  # Intentionally unused helper retained for readability during refactors.
+  # credo:disable-for-next-line Credo.Check.Readability.UnnecessaryAliasExpansion
   defp maybe_add(children, _roles, _role, _child), do: children
 end
