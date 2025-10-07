@@ -14,9 +14,8 @@ defmodule Daftka.Cluster.Supervisor do
 
   @impl true
   def init(_opts) do
-    children = [
-      # placeholder child to show a supervisor exists; empty list for now
-    ]
+    # No children for now; gproc is started by its application
+    children = []
 
     Supervisor.init(children, strategy: :one_for_one)
   end

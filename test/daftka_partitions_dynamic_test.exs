@@ -8,7 +8,7 @@ defmodule DaftkaPartitionsDynamicTest do
     assert is_pid(pid)
     assert Process.alive?(pid)
 
-    via = {:via, Registry, {Daftka.Registry, {:partition_supervisor, "topic-a", 0}}}
+    via = Daftka.PartitionReplica.Supervisor.supervisor_name("topic-a", 0)
     assert pid == GenServer.whereis(via)
 
     :ok = DynamicSupervisor.terminate_child(Daftka.Partitions.Supervisor, pid)

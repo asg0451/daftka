@@ -33,7 +33,7 @@ defmodule Daftka.PartitionReplica.Supervisor do
   defp via_name(opts) do
     topic = Keyword.fetch!(opts, :topic)
     partition = Keyword.fetch!(opts, :partition)
-    {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
+    Daftka.Naming.via({:partition_supervisor, topic, partition})
   end
 
   def init(opts) do
@@ -76,7 +76,7 @@ defmodule Daftka.PartitionReplica.Supervisor do
   """
   @spec storage_name(topic(), partition()) :: GenServer.name()
   def storage_name(topic, partition) do
-    {:via, Registry, {Daftka.Registry, {:partition_storage, topic, partition}}}
+    Daftka.Naming.via({:partition_storage, topic, partition})
   end
 
   @doc """
@@ -84,7 +84,7 @@ defmodule Daftka.PartitionReplica.Supervisor do
   """
   @spec server_name(topic(), partition()) :: GenServer.name()
   def server_name(topic, partition) do
-    {:via, Registry, {Daftka.Registry, {:partition_server, topic, partition}}}
+    Daftka.Naming.via({:partition_server, topic, partition})
   end
 
   @doc """
@@ -92,7 +92,7 @@ defmodule Daftka.PartitionReplica.Supervisor do
   """
   @spec supervisor_name(topic(), partition()) :: GenServer.name()
   def supervisor_name(topic, partition) do
-    {:via, Registry, {Daftka.Registry, {:partition_supervisor, topic, partition}}}
+    Daftka.Naming.via({:partition_supervisor, topic, partition})
   end
 
   # No local atom names to avoid unbounded atom creation
