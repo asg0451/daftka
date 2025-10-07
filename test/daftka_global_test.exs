@@ -31,11 +31,11 @@ defmodule DaftkaGlobalTest do
     assert is_pid(Daftka.Global.whereis(name))
 
     Daftka.Global.unregister_unique(name)
-    # Allow a tick for unregister propagation in gproc/local
+    send(task.pid, :stop)
+    # Allow a tick for unregister propagation and task exit
     Process.sleep(10)
     assert Daftka.Global.whereis(name) == :undefined
 
     send(pid, :stop)
-    send(task.pid, :stop)
   end
 end
