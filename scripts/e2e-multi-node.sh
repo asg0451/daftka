@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT_DIR"
 
-export MIX_ENV=dev
+export MIX_ENV=prod
 
 # Build once
 mix deps.get >/dev/null
@@ -15,7 +15,7 @@ mix compile >/dev/null
 # Start node 1 (all planes)
 ROLE='[:control_plane, :data_plane]'
 CMD1=(elixir --name n1@127.0.0.1 -S mix run --no-halt)
-DAFTKA_ROLE=$ROLE \
+DAFTKA_GATEWAY_PORT=4001 DAFTKA_ROLE=$ROLE \
   "${CMD1[@]}" &
 PID1=$!
 
@@ -24,7 +24,7 @@ sleep 1
 # Start node 2 (all planes)
 ROLE2='[:control_plane, :data_plane]'
 DAFTKA_CONNECT_TO=n1@127.0.0.1 \
-DAFTKA_ROLE=$ROLE2 \
+DAFTKA_GATEWAY_PORT=4002 DAFTKA_ROLE=$ROLE2 \
   elixir --name n2@127.0.0.1 -S mix run --no-halt &
 PID2=$!
 
@@ -35,7 +35,7 @@ cleanup() {
 trap cleanup EXIT
 
 # Wait for gateway on both nodes
-for i in {1..30}; do
+for i in {1..50}; do
   if curl -fsS http://127.0.0.1:4001/healthz >/dev/null 2>&1; then
     break
   fi
@@ -43,18 +43,37 @@ for i in {1..30}; do
 done
 
 curl -fsS http://127.0.0.1:4001/healthz | grep -q "ok"
-curl -fsS http://127.0.0.1:4001/healthz | grep -q "ok"
+
+for i in {1..50}; do
+  if curl -fsS http://127.0.0.1:4002/healthz >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+done
+
+curl -fsS http://127.0.0.1:4002/healthz | grep -q "ok"
 
 # Create topic and produce/fetch via node 1 gateway
 curl -fsS -X POST http://127.0.0.1:4001/topics -H 'content-type: application/json' \
-  -d '{"name":"e2e","partitions":1}' >/dev/null
+  -d '{"name":"e2e1","partitions":1}' >/dev/null
 
-curl -fsS -X POST http://127.0.0.1:4001/topics/e2e/partitions/0/produce \
+curl -fsS -X POST http://127.0.0.1:4001/topics/e2e1/partitions/0/produce \
   -H 'content-type: application/json' -d '{"key":"k","value":"v","headers":{}}' \
   | grep -q '"offset":0'
 
-curl -fsS 'http://127.0.0.1:4001/topics/e2e/partitions/0/next_offset' | grep -q '"next_offset":1'
-curl -fsS 'http://127.0.0.1:4001/topics/e2e/partitions/0/fetch?from_offset=0&max_count=10' | grep -q '"value":"v"'
+curl -fsS 'http://127.0.0.1:4001/topics/e2e1/partitions/0/next_offset' | grep -q '"next_offset":1'
+curl -fsS 'http://127.0.0.1:4001/topics/e2e1/partitions/0/fetch?from_offset=0&max_count=10' | grep -q '"value":"v"'
+
+# Create topic and produce/fetch via node 2 gateway
+curl -fsS -X POST http://127.0.0.1:4002/topics -H 'content-type: application/json' \
+  -d '{"name":"e2e2","partitions":1}' >/dev/null
+
+curl -fsS -X POST http://127.0.0.1:4002/topics/e2e2/partitions/0/produce \
+  -H 'content-type: application/json' -d '{"key":"k2","value":"v2","headers":{}}' \
+  | grep -q '"offset":0'
+
+curl -fsS 'http://127.0.0.1:4002/topics/e2e2/partitions/0/next_offset' | grep -q '"next_offset":1'
+curl -fsS 'http://127.0.0.1:4002/topics/e2e2/partitions/0/fetch?from_offset=0&max_count=10' | grep -q '"value":"v2"'
 
 # Also exercise node 2 by hitting its node name via httpc not needed; both listen same port locally
 
