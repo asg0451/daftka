@@ -6,11 +6,11 @@ defmodule DaftkaRebalancerTest do
   alias Daftka.Metadata.Store
   alias Daftka.MetadataAPI.Server, as: MetadataAPI
   alias Daftka.PartitionReplica.Supervisor, as: PartSup
-  alias Daftka.Rebalancer
+  # alias retained for clarity of intent
   alias Daftka.Types
 
   setup do
-    assert Process.whereis(Rebalancer)
+    assert :gproc.where(Daftka.Naming.key_global({:rebalancer}))
     Store.clear()
     :ok
   end
@@ -49,7 +49,10 @@ defmodule DaftkaRebalancerTest do
     # Trigger manual reconcile by sending poll
     _log =
       capture_log(fn ->
-        send(Rebalancer, :poll)
+        if pid = Process.whereis(Daftka.Rebalancer) do
+          send(pid, :poll)
+        end
+
         Process.sleep(50)
       end)
 

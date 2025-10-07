@@ -13,6 +13,7 @@ defmodule Daftka.Gateway.Supervisor do
 
   @impl true
   def init(_opts) do
+    _ = :gproc.reg(Daftka.Naming.key_global({:gateway_supervisor}))
     port = Application.get_env(:daftka, :gateway_port, 4001)
 
     Logger.info("Starting HTTP gateway on port #{port}")

@@ -14,8 +14,11 @@ defmodule Daftka.Cluster.Supervisor do
 
   @impl true
   def init(_opts) do
+    _ = :gproc.reg(Daftka.Naming.key_global({:cluster_supervisor}))
+
     children = [
-      # placeholder child to show a supervisor exists; empty list for now
+      # EPMD connector to ensure we can form a small static cluster via env
+      {Daftka.Cluster.EPMDConnector, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

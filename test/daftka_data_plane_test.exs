@@ -9,7 +9,7 @@ defmodule DaftkaDataPlaneTest do
   end
 
   test "router and gateway servers are running" do
-    assert Process.whereis(Daftka.Router)
+    assert :gproc.where(Daftka.Naming.key_global({:router_supervisor}))
     # assert Ranch listener child exists under gateway supervisor (named via :ref)
     children = Supervisor.which_children(Daftka.Gateway.Supervisor)
 

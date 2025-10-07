@@ -9,6 +9,7 @@ defmodule Daftka.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: [
         credo: :test,
         dialyzer: :test,
@@ -37,6 +38,7 @@ defmodule Daftka.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:gproc, "~> 0.9"},
       {:plug, "~> 1.15"},
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
@@ -61,6 +63,9 @@ defmodule Daftka.MixProject do
   end
 
   # Development-only extras so IEx can launch the Observer GUI.
-  defp extra_apps(:dev), do: [:logger, :wx, :observer]
-  defp extra_apps(_env), do: [:logger]
+  defp extra_apps(:dev), do: [:logger, :wx, :observer, :gproc]
+  defp extra_apps(_env), do: [:logger, :gproc]
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
