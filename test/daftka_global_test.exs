@@ -12,14 +12,13 @@ defmodule DaftkaGlobalTest do
           end
       end)
 
-    # Register the spawned process by proxy: gproc requires current proc; so link and send reg
+    # Register the spawned process by proxy: we register the current task, not the spawned pid.
     ref = make_ref()
     parent = self()
 
     task =
       Task.async(fn ->
         Process.flag(:trap_exit, true)
-        :erlang.link(pid)
         true = Daftka.Global.register_unique(name)
         send(parent, {:registered, ref})
 
