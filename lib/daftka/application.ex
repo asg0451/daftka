@@ -38,8 +38,4 @@ defmodule Daftka.Application do
 
     children
   end
-
-  # Intentionally unused helper retained for readability during refactors.
-  # credo:disable-for-next-line Credo.Check.Readability.UnnecessaryAliasExpansion
-  defp maybe_add(children, _roles, _role, _child), do: children
 end

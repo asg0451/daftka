@@ -5,7 +5,7 @@ defmodule DaftkaMetadataAPIServerTest do
   alias Daftka.MetadataAPI.Server, as: MetadataAPI
 
   setup do
-    assert Process.whereis(Daftka.Naming.via_global({:metadata_api}))
+    assert :gproc.where(Daftka.Naming.key_global({:metadata_api_supervisor}))
     Store.clear()
     :ok
   end

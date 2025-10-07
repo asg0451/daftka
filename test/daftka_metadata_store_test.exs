@@ -5,7 +5,7 @@ defmodule DaftkaMetadataStoreTest do
   alias Daftka.Types
 
   setup do
-    assert Process.whereis(Daftka.Naming.via_global({:metadata, :store}))
+    assert :gproc.where(Daftka.Naming.key_global({:metadata, :store}))
     Store.clear()
     :ok
   end

@@ -9,7 +9,10 @@ defmodule Daftka.Naming do
   @type via :: {:via, :gproc, key()}
 
   @spec key_global(term()) :: key()
-  def key_global(term), do: {:n, :g, {:daftka, term}}
+  def key_global(term) do
+    scope = if Node.alive?(), do: :g, else: :l
+    {:n, scope, {:daftka, term}}
+  end
 
   @spec via_global(term()) :: via()
   def via_global(term), do: {:via, :gproc, key_global(term)}

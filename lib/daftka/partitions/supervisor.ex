@@ -12,6 +12,7 @@ defmodule Daftka.Partitions.Supervisor do
 
   @impl true
   def init(_opts) do
+    _ = :gproc.reg(Daftka.Naming.key_global({:partitions_supervisor}))
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 

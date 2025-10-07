@@ -8,11 +8,12 @@ defmodule Daftka.Gateway.Supervisor do
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:gateway_supervisor}))
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
   def init(_opts) do
+    _ = :gproc.reg(Daftka.Naming.key_global({:gateway_supervisor}))
     port = Application.get_env(:daftka, :gateway_port, 4001)
 
     Logger.info("Starting HTTP gateway on port #{port}")

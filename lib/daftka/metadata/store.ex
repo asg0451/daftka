@@ -146,7 +146,7 @@ defmodule Daftka.Metadata.Store do
   """
   @spec dump() :: state()
   def dump do
-    Agent.get(__MODULE__, fn %State{} = state -> state end)
+    Agent.get(name(), fn %State{} = state -> state end)
   end
 
   @doc """
@@ -159,7 +159,7 @@ defmodule Daftka.Metadata.Store do
     if Types.topic?(topic) do
       topic_key = Types.topic_value(topic)
 
-      Agent.get_and_update(__MODULE__, fn %State{topics: topics} = state ->
+      Agent.get_and_update(name(), fn %State{topics: topics} = state ->
         if Map.has_key?(topics, topic_key) do
           {:ok, %State{state | topics: Map.delete(topics, topic_key)}}
         else
