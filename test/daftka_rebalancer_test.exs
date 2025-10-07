@@ -10,7 +10,7 @@ defmodule DaftkaRebalancerTest do
   alias Daftka.Types
 
   setup do
-    assert Process.whereis(Rebalancer)
+    assert Process.whereis(Daftka.Naming.via_global({:rebalancer}))
     Store.clear()
     :ok
   end

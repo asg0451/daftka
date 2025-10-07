@@ -9,13 +9,14 @@ defmodule Daftka.Cluster.Supervisor do
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+    Supervisor.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:cluster_supervisor}))
   end
 
   @impl true
   def init(_opts) do
     children = [
-      # placeholder child to show a supervisor exists; empty list for now
+      # EPMD connector to ensure we can form a small static cluster via env
+      {Daftka.Cluster.EPMDConnector, []}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

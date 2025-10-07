@@ -13,7 +13,7 @@ defmodule Daftka.Router do
 
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:router}))
   end
 
   @impl true

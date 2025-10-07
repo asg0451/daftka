@@ -7,7 +7,7 @@ defmodule Daftka.Router.Supervisor do
 
   @spec start_link(keyword()) :: Supervisor.on_start()
   def start_link(opts \\ []) do
-    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+    Supervisor.start_link(__MODULE__, opts, name: Daftka.Naming.via_global({:router_supervisor}))
   end
 
   @impl true
