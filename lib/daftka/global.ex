@@ -44,14 +44,18 @@ defmodule Daftka.Global do
   @spec unregister_unique(name()) :: :ok
   def unregister_unique(name) do
     scope = if(Node.alive?(), do: :g, else: :l)
+    owner = whereis(name)
 
-    _ =
-      try do
-        :gproc.unreg({:n, scope, name})
-      rescue
-        _ -> :ok
-      end
+    if is_pid(owner) do
+      _ =
+        try do
+          :gproc.unreg_other({:n, scope, name}, owner)
+        rescue
+          _ -> :ok
+        end
+    end
 
+    _ = (try do Registry.unregister(Daftka.Registry, name) rescue _ -> :ok end)
     :ok
   end
 
