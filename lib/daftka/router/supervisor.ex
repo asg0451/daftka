@@ -13,6 +13,7 @@ defmodule Daftka.Router.Supervisor do
   @impl true
   def init(_opts) do
     _ = :gproc.reg(Daftka.Naming.key_global({:router_supervisor}))
+
     children = [
       Daftka.Router
     ]

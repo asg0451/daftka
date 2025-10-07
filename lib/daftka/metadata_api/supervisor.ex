@@ -13,6 +13,7 @@ defmodule Daftka.MetadataAPI.Supervisor do
   @impl true
   def init(_opts) do
     _ = :gproc.reg(Daftka.Naming.key_global({:metadata_api_supervisor}))
+
     children = [
       Daftka.MetadataAPI.Server
     ]

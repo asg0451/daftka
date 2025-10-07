@@ -52,6 +52,7 @@ defmodule DaftkaRebalancerTest do
         if pid = Process.whereis(Daftka.Rebalancer) do
           send(pid, :poll)
         end
+
         Process.sleep(50)
       end)
 

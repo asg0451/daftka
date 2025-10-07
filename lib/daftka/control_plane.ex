@@ -17,6 +17,7 @@ defmodule Daftka.ControlPlane do
   def init(_opts) do
     # Register a global gproc alias for discovery/testing
     _ = :gproc.reg(Daftka.Naming.key_global({:control_plane}))
+
     children = [
       # Cluster membership and node strategy
       Daftka.Cluster.Supervisor,

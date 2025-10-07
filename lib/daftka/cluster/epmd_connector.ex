@@ -21,7 +21,7 @@ defmodule Daftka.Cluster.EPMDConnector do
 
   @impl true
   def handle_info(:tick, state) do
-    Enum.each(state.peers, &safe_connect/1)
+    Enum.each(state.peers, &Node.connect/1)
     schedule()
     {:noreply, state}
   end
@@ -42,8 +42,5 @@ defmodule Daftka.Cluster.EPMDConnector do
     end
   end
 
-  defp safe_connect(node_name) when is_atom(node_name) do
-    _ = Node.connect(node_name)
-    :ok
-  end
+  # no safe_connect; let Node.connect/1 return its result for visibility
 end

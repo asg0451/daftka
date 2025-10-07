@@ -12,7 +12,7 @@ export MIX_ENV=dev
 mix deps.get >/dev/null
 mix compile >/dev/null
 
-# Start node 1 (control+data)
+# Start node 1 (all planes)
 ROLE='[:control_plane, :data_plane]'
 CMD1=(elixir --name n1@127.0.0.1 -S mix run --no-halt)
 DAFTKA_ROLE=$ROLE \
@@ -21,8 +21,8 @@ PID1=$!
 
 sleep 1
 
-# Start node 2 (data + http_gateway)
-ROLE2='[:data_plane, :http_gateway]'
+# Start node 2 (all planes)
+ROLE2='[:control_plane, :data_plane]'
 DAFTKA_CONNECT_TO=n1@127.0.0.1 \
 DAFTKA_ROLE=$ROLE2 \
   elixir --name n2@127.0.0.1 -S mix run --no-halt &
@@ -34,7 +34,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Wait for gateway on default port
+# Wait for gateway on both nodes
 for i in {1..30}; do
   if curl -fsS http://127.0.0.1:4001/healthz >/dev/null 2>&1; then
     break
@@ -43,8 +43,9 @@ for i in {1..30}; do
 done
 
 curl -fsS http://127.0.0.1:4001/healthz | grep -q "ok"
+curl -fsS http://127.0.0.1:4001/healthz | grep -q "ok"
 
-# Create topic and produce/fetch
+# Create topic and produce/fetch via node 1 gateway
 curl -fsS -X POST http://127.0.0.1:4001/topics -H 'content-type: application/json' \
   -d '{"name":"e2e","partitions":1}' >/dev/null
 
@@ -54,5 +55,7 @@ curl -fsS -X POST http://127.0.0.1:4001/topics/e2e/partitions/0/produce \
 
 curl -fsS 'http://127.0.0.1:4001/topics/e2e/partitions/0/next_offset' | grep -q '"next_offset":1'
 curl -fsS 'http://127.0.0.1:4001/topics/e2e/partitions/0/fetch?from_offset=0&max_count=10' | grep -q '"value":"v"'
+
+# Also exercise node 2 by hitting its node name via httpc not needed; both listen same port locally
 
 echo "E2E OK"

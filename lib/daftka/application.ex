@@ -19,7 +19,7 @@ defmodule Daftka.Application do
     Supervisor.start_link(children, opts)
   end
 
-  @spec role_children([:control_plane | :data_plane | :http_gateway]) :: [Supervisor.child_spec()]
+  @spec role_children([:control_plane | :data_plane]) :: [Supervisor.child_spec()]
   defp role_children(roles) do
     roles_set = MapSet.new(roles)
     children = []
@@ -28,13 +28,6 @@ defmodule Daftka.Application do
       if :control_plane in roles_set, do: children ++ [Daftka.ControlPlane], else: children
 
     children = if :data_plane in roles_set, do: children ++ [Daftka.DataPlane], else: children
-    # Only add standalone gateway if data_plane is NOT present
-    children =
-      if :http_gateway in roles_set and :data_plane not in roles_set do
-        children ++ [Daftka.Gateway.Supervisor]
-      else
-        children
-      end
 
     children
   end

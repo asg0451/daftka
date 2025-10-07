@@ -15,6 +15,7 @@ defmodule Daftka.DataPlane do
   @impl true
   def init(_opts) do
     _ = :gproc.reg(Daftka.Naming.key_global({:data_plane}))
+
     children = [
       Daftka.Router.Supervisor,
       Daftka.Gateway.Supervisor,
